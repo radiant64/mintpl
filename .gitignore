@@ -1,0 +1,7 @@
+# CMake build folder by convention.
+build/
+
+# Vim litter.
+*~
+.*.sw[po]
+
