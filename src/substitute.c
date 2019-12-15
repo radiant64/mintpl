@@ -10,6 +10,7 @@ static mtpl_result mtpl_perform_substitution(
     const char* source,
     const mtpl_allocators* allocators,
     mtpl_descriptors* descriptors,
+    mtpl_properties* properties,
     mtpl_buffer* out_buffer
 ) {
     size_t read = 0;
@@ -60,6 +61,7 @@ static mtpl_result mtpl_perform_substitution(
 mtpl_result mtpl_substitute(
     const char* source,
     mtpl_descriptors* descriptors,
+    mtpl_properties* properties,
     mtpl_buffer* out_buffer
 ) {
     static const mtpl_allocators allocators = { malloc, realloc, free };
@@ -68,6 +70,7 @@ mtpl_result mtpl_substitute(
         source,
         &allocators,
         descriptors,
+        properties,
         out_buffer
     );
 }
@@ -76,6 +79,7 @@ mtpl_result mtpl_custom_alloc_substitute(
     const char* source,
     const mtpl_allocators* allocators,
     mtpl_descriptors* descriptors,
+    mtpl_properties* properties,
     mtpl_buffer* out_buffer
 ) {
     return mtpl_perform_substitution(
@@ -83,6 +87,7 @@ mtpl_result mtpl_custom_alloc_substitute(
         source,
         allocators,
         descriptors,
+        properties,
         out_buffer
     );
 }

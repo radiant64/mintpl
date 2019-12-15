@@ -33,11 +33,19 @@ typedef struct {
     size_t size;
 } mtpl_buffer;
 
+typedef struct mtpl_properties {
+    char** names;
+    char** values;
+    size_t count;
+    size_t capacity;
+} mtpl_properties;
+
 struct mtpl_descriptors;
 typedef mtpl_result(*mtpl_generator)(
     const char* arg,
     const mtpl_allocators* allocators,
     struct mtpl_descriptors* descriptors,
+    mtpl_properties* properties,
     mtpl_buffer* out_buffer
 );
 
