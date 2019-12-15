@@ -18,7 +18,7 @@ typedef enum {
     MTPL_SUCCESS,
     MTPL_ERR_MEMORY,
     MTPL_ERR_SYNTAX,
-    MTPL_ERR_UNKNOWN_GENERATOR
+    MTPL_ERR_UNKNOWN_KEY
 } mtpl_result;
 
 typedef struct {

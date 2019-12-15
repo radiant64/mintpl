@@ -21,7 +21,7 @@ mtpl_result mtpl_lookup(
         mtpl_lookup_compare
     );
     if (!found) {
-        return MTPL_ERR_UNKNOWN_GENERATOR;
+        return MTPL_ERR_UNKNOWN_KEY;
     }
 
     uintptr_t index = (
