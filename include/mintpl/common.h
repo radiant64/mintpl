@@ -4,6 +4,7 @@
 
 #define MTPL_DEFAULT_BUFSIZE 1024
 #define MTPL_INITIAL_DESCRIPTORS 16
+#define MTPL_GENERATOR_NAME_MAXLEN 32
 
 #define MTPL_REALLOC_CHECKED(allocators, addr, size)\
     do {\
@@ -18,7 +19,8 @@ typedef enum {
     MTPL_SUCCESS,
     MTPL_ERR_MEMORY,
     MTPL_ERR_SYNTAX,
-    MTPL_ERR_UNKNOWN_KEY
+    MTPL_ERR_UNKNOWN_KEY,
+    MTPL_ERR_MALFORMED_NAME
 } mtpl_result;
 
 typedef struct {
@@ -33,26 +35,18 @@ typedef struct {
     size_t size;
 } mtpl_buffer;
 
-typedef struct mtpl_properties {
-    char** names;
-    char** values;
-    size_t count;
-    size_t capacity;
-} mtpl_properties;
+typedef struct {
+    const char* data;
+    size_t cursor;
+    size_t size;
+} mtpl_readbuffer;
 
-struct mtpl_descriptors;
+struct mtpl_hashtable;
 typedef mtpl_result(*mtpl_generator)(
     const char* arg,
     const mtpl_allocators* allocators,
-    struct mtpl_descriptors* descriptors,
-    mtpl_properties* properties,
+    struct mtpl_hashtable* generators,
+    struct mtpl_hashtable* properties,
     mtpl_buffer* out_buffer
 );
-
-typedef struct mtpl_descriptors {
-    char** names;
-    mtpl_generator* generators;
-    size_t count;
-    size_t capacity;
-} mtpl_descriptors;
 

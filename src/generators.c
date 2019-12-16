@@ -5,8 +5,8 @@
 mtpl_result mtpl_generator_copy(
     const char* arg,
     const mtpl_allocators* allocators,
-    mtpl_descriptors* descriptors,
-    mtpl_properties* properties,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
     mtpl_buffer* out_buffer
 ) {
     size_t len = strlen(arg);
@@ -27,14 +27,13 @@ mtpl_result mtpl_generator_copy(
 mtpl_result mtpl_generator_replace(
     const char* arg,
     const mtpl_allocators* allocators,
-    mtpl_descriptors* descriptors,
-    mtpl_properties* properties,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
     mtpl_buffer* out_buffer
 ) {
-    const char* value = NULL;
-    mtpl_result result = mtpl_get_property(arg, properties, &value);
-    if (result != MTPL_SUCCESS) {
-        return result;
+    const char* value = mtpl_htable_search(arg, properties);
+    if (!value) {
+        return MTPL_ERR_UNKNOWN_KEY;
     }
     
     size_t len = strlen(value);

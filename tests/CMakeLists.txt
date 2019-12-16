@@ -3,8 +3,8 @@ project(mintpl-tests)
 include(../cmake/CMocka.cmake)
 
 set(TESTS
-    test_descriptor
     test_hashtable
+    test_generators
 )
 
 foreach(T ${TESTS})
