@@ -38,8 +38,7 @@ mtpl_result mtpl_insert_descriptor(
     mtpl_descriptors* descriptors
 ) {
     size_t index = 0;
-    for (
-        ;
+    for (;
         index < descriptors->count 
             && strcmp(name, descriptors->names[index]) > 0;
         ++index

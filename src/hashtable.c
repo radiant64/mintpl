@@ -21,20 +21,24 @@ mtpl_result mtpl_htable_create(
     const mtpl_allocators* allocators,
     mtpl_hashtable** out_htable
 ) {
-    out_htable = allocators->malloc(sizeof(mtpl_hashtable));
-    if (!out_htable) {
+    *out_htable = allocators->malloc(sizeof(mtpl_hashtable));
+    if (!*out_htable) {
         return MTPL_ERR_MEMORY;
     }
-    out_htable->entries = allocators->malloc(
+    (*out_htable)->entries = allocators->malloc(
         sizeof(mtpl_hashentry) * MTPL_HTABLE_SIZE
     );
-    if (!out_htable->entries) {
+    if (!(*out_htable)->entries) {
         return MTPL_ERR_MEMORY;
     }
-    memset(out_htable->entries, 0, sizeof(mtpl_hashentry) * MTPL_HTABLE_SIZE);
-    out_htable->size = MTPL_HTABLE_SIZE;
-    out_htable->count = 0;
-    out_htable->next = NULL;
+    memset(
+        (*out_htable)->entries,
+        0,
+        sizeof(mtpl_hashentry) * MTPL_HTABLE_SIZE
+    );
+    (*out_htable)->size = MTPL_HTABLE_SIZE;
+    (*out_htable)->count = 0;
+    (*out_htable)->next = NULL;
     return MTPL_SUCCESS;
 }
 
@@ -55,7 +59,10 @@ void mtpl_htable_free(
 void* mtpl_htable_search(const char* key, const mtpl_hashtable* htable) {
     uint32_t index = calculate_hash(key, htable->size);
     for (uint32_t i = 0; i < 16; ++i) {
-        if (strcmp(htable->entries[index + i].key, key) == 0) {
+        if (
+            htable->entries[index + i].key
+                && strcmp(htable->entries[index + i].key, key) == 0
+        ) {
             return htable->entries[index + i].data;
         }
     }
@@ -68,19 +75,27 @@ void* mtpl_htable_search(const char* key, const mtpl_hashtable* htable) {
 mtpl_result mtpl_htable_insert(
     const char* key,
     void* value,
+    size_t value_size,
     const mtpl_allocators* allocators,
     mtpl_hashtable* htable
 ) {
     uint32_t index = calculate_hash(key, htable->size);
     for (uint32_t i = 0; i < 16; ++i) {
-        const char** entrykey = &(htable->entries[index + i].key); 
-        if (!*entrykey || strcmp(*entrykey, key) == 0) {
+        mtpl_hashentry* entry = &(htable->entries[index + i]); 
+        if (!entry->key || strcmp(entry->key, key) == 0) {
             size_t len = strlen(key) + 1;
-            *entrykey = allocators->malloc(len);
-            if (!*entrykey) {
+            entry->key = allocators->malloc(len);
+            if (!entry->key) {
                 return MTPL_ERR_MEMORY;
             }
-            memcpy(*entrykey, key, len);
+            memcpy(entry->key, key, len);
+
+            entry->data = allocators->malloc(value_size);
+            if (!entry->data) {
+                return MTPL_ERR_MEMORY;
+            }
+            memcpy(entry->data, value, value_size);
+
             htable->count++;
             return MTPL_SUCCESS;
         }
@@ -91,7 +106,7 @@ mtpl_result mtpl_htable_insert(
             return result;
         }
     }
-    return mtpl_htable_insert(key, value, allocators, htable->next);
+    return mtpl_htable_insert(key, value, value_size, allocators, htable->next);
 }
 
 mtpl_result mtpl_htable_delete(
@@ -101,7 +116,7 @@ mtpl_result mtpl_htable_delete(
 ) {
     uint32_t index = calculate_hash(key, htable->size);
     for (uint32_t i = 0; i < 16; ++i) {
-        const char** entrykey = &(htable->entries[index + i].key); 
+        char** entrykey = &(htable->entries[index + i].key); 
         if (strcmp(*entrykey, key) == 0) {
             allocators->free(*entrykey);
             *entrykey = NULL;

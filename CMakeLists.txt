@@ -4,6 +4,7 @@ include_directories(include)
 
 set(SOURCES
     src/descriptor.c
+    src/hashtable.c
     src/generators.c
     src/substitute.c
 )

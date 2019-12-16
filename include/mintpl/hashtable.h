@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-#define MTPL_HTABLE_SIZE 1024;
+#define MTPL_HTABLE_SIZE 1024
 
 typedef struct {
     char* key;
@@ -33,6 +33,7 @@ void* mtpl_htable_search(const char* key, const mtpl_hashtable* htable);
 mtpl_result mtpl_htable_insert(
     const char* key,
     void* value,
+    size_t value_size,
     const mtpl_allocators* allocators,
     mtpl_hashtable* htable
 );
