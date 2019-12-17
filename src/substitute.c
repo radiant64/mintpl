@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 static mtpl_result mtpl_perform_substitution(
     mtpl_generator generator,
@@ -37,8 +38,11 @@ static mtpl_result mtpl_perform_substitution(
                 result = MTPL_ERR_MALFORMED_NAME;
                 goto finish_substitution;
             }
+            source->cursor++;
             gen_name[gen_read_chars] = '\0';
-            sub_generator = mtpl_htable_search(gen_name, generators);
+            sub_generator = *(void**) mtpl_htable_search(gen_name, generators);
+            memset(gen_name, 0, sizeof(gen_name));
+            gen_read_chars = 0;
             if (!sub_generator) {
                 result = MTPL_ERR_UNKNOWN_KEY;
                 goto finish_substitution;
@@ -63,7 +67,7 @@ static mtpl_result mtpl_perform_substitution(
             goto finish_substitution;
         case '\\':
             // Escape next character if not 0.
-            if (!source->data[++source->cursor]) {
+            if (!source->data[++(source->cursor)]) {
                 result = MTPL_ERR_SYNTAX;
                 goto finish_substitution;
             }
@@ -78,7 +82,8 @@ static mtpl_result mtpl_perform_substitution(
                 );
                 arg_buffer.size *= 2;
             }
-            arg_buffer.data[arg_buffer.cursor++] = source->cursor++;
+            arg_buffer.data[arg_buffer.cursor++]
+                = source->data[source->cursor++];
             break;
         }
     }

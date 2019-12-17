@@ -5,6 +5,7 @@ include(../cmake/CMocka.cmake)
 set(TESTS
     test_hashtable
     test_generators
+    test_substitute
 )
 
 foreach(T ${TESTS})
