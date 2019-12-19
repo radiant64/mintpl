@@ -1,2 +1,0 @@
-#include <mintpl/descriptor.h>
-

@@ -2,6 +2,10 @@
 
 #include <stddef.h>
 
+#ifdef _cplusplus
+extern "C" {
+#endif
+
 #define MTPL_DEFAULT_BUFSIZE 1024
 #define MTPL_INITIAL_DESCRIPTORS 16
 #define MTPL_GENERATOR_NAME_MAXLEN 32
@@ -29,24 +33,7 @@ typedef struct {
     void (*free)(void*);
 } mtpl_allocators;
 
-typedef struct {
-    char* data;
-    size_t cursor;
-    size_t size;
-} mtpl_buffer;
-
-typedef struct {
-    const char* data;
-    size_t cursor;
-    size_t size;
-} mtpl_readbuffer;
-
-struct mtpl_hashtable;
-typedef mtpl_result(*mtpl_generator)(
-    const char* arg,
-    const mtpl_allocators* allocators,
-    struct mtpl_hashtable* generators,
-    struct mtpl_hashtable* properties,
-    mtpl_buffer* out_buffer
-);
+#ifdef _cplusplus
+}
+#endif
 

@@ -96,28 +96,6 @@ finish_substitution:
 
 mtpl_result mtpl_substitute(
     const char* source,
-    mtpl_hashtable* generators,
-    mtpl_hashtable* properties,
-    mtpl_buffer* out_buffer
-) {
-    static const mtpl_allocators allocators = { malloc, realloc, free };
-    mtpl_readbuffer buffer = {
-        .data = source,
-        .cursor = 0,
-        .size = 0
-    };
-    return mtpl_perform_substitution(
-        mtpl_generator_copy,
-        &allocators,
-        &buffer,
-        generators,
-        properties,
-        out_buffer
-    );
-}
-
-mtpl_result mtpl_custom_alloc_substitute(
-    const char* source,
     const mtpl_allocators* allocators,
     mtpl_hashtable* generators,
     mtpl_hashtable* properties,

@@ -3,8 +3,10 @@ project(mintpl)
 include_directories(include)
 
 set(SOURCES
+    src/buffers.c
     src/hashtable.c
     src/generators.c
+    src/mintpl.c
     src/substitute.c
 )
 

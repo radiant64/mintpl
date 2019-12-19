@@ -1,8 +1,11 @@
 #pragma once
 
 #include <mintpl/common.h>
-
 #include <stdint.h>
+
+#ifdef _cplusplus
+extern "C" {
+#endif
 
 #define MTPL_HTABLE_SIZE 1024
 
@@ -32,7 +35,7 @@ void* mtpl_htable_search(const char* key, const mtpl_hashtable* htable);
 
 mtpl_result mtpl_htable_insert(
     const char* key,
-    void* value,
+    const void* value,
     size_t value_size,
     const mtpl_allocators* allocators,
     mtpl_hashtable* htable
@@ -43,4 +46,8 @@ mtpl_result mtpl_htable_delete(
     const mtpl_allocators* allocators,
     mtpl_hashtable* htable
 );
+
+#ifdef _cplusplus
+}
+#endif
 

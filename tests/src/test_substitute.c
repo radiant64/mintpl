@@ -15,7 +15,13 @@ static const mtpl_allocators allocators = { malloc, realloc, free };
 void test_plaintext(void** state) {
     char text[256] = { 0 };
     mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
-    mtpl_result result = mtpl_substitute("foo bar", NULL, NULL, &buffer);
+    mtpl_result result = mtpl_substitute(
+        "foo bar",
+        &allocators,
+        NULL,
+        NULL,
+        &buffer
+    );
     assert_int_equal(result, MTPL_SUCCESS);
     assert_string_equal("foo bar", text);
 }
@@ -35,6 +41,7 @@ void test_nested(void** state) {
     );
     mtpl_result result = mtpl_substitute(
         "[:>foo [:>bar]]",
+        &allocators,
         generators,
         NULL,
         &buffer
@@ -82,6 +89,7 @@ void test_replace(void** state) {
     );
     mtpl_result result = mtpl_substitute(
         "[:>[=>test1] [=>test2]]",
+        &allocators,
         generators,
         properties,
         &buffer
@@ -93,7 +101,13 @@ void test_replace(void** state) {
 void test_escape(void** state) {
     char text[256] = { 0 };
     mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
-    mtpl_result result = mtpl_substitute("\\[:>foo bar\\]", NULL, NULL, &buffer);
+    mtpl_result result = mtpl_substitute(
+        "\\[:>foo bar\\]",
+        &allocators,
+        NULL,
+        NULL,
+        &buffer
+    );
     assert_int_equal(result, MTPL_SUCCESS);
     assert_string_equal("[:>foo bar]", text);
 }

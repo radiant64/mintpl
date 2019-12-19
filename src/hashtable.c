@@ -74,7 +74,7 @@ void* mtpl_htable_search(const char* key, const mtpl_hashtable* htable) {
 
 mtpl_result mtpl_htable_insert(
     const char* key,
-    void* value,
+    const void* value,
     size_t value_size,
     const mtpl_allocators* allocators,
     mtpl_hashtable* htable
