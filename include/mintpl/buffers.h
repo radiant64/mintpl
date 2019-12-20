@@ -31,9 +31,16 @@ mtpl_result mtpl_buffer_free(
 );
 
 mtpl_result mtpl_buffer_print(
-    const char* text,
+    const mtpl_buffer* input,
     const mtpl_allocators* allocators,
-    mtpl_buffer* buffer
+    mtpl_buffer* output
+);
+
+mtpl_result mtpl_buffer_extract_word(
+    char delimiter,
+    const mtpl_allocators* allocators,
+    mtpl_buffer* input,
+    mtpl_buffer* out
 );
 
 #ifdef _cplusplus

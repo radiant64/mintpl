@@ -10,11 +10,11 @@ extern "C" {
 #define MTPL_INITIAL_DESCRIPTORS 16
 #define MTPL_GENERATOR_NAME_MAXLEN 32
 
-#define MTPL_REALLOC_CHECKED(allocators, addr, size)\
+#define MTPL_REALLOC_CHECKED(allocators, addr, size, errcon)\
     do {\
         void* res_addr = allocators->realloc(addr, size);\
         if (!res_addr) {\
-            return MTPL_ERR_MEMORY;\
+            errcon;\
         }\
         addr = res_addr;\
     } while(0)

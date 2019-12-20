@@ -6,32 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static mtpl_result lookup_generator(
-    const mtpl_hashtable* generators,
-    mtpl_readbuffer* source,
-    mtpl_generator* out_generator
-) {
-    char gen_name[MTPL_GENERATOR_NAME_MAXLEN + 1] = { 0 };
-    uint8_t gen_read_chars = 0;
-    while (
-        gen_read_chars <= MTPL_GENERATOR_NAME_MAXLEN 
-            && source->data[++(source->cursor)] != '>'
-    ) {
-        gen_name[gen_read_chars++] = source->data[source->cursor];
-    }
-
-    if (source->data[source->cursor] != '>') {
-        return MTPL_ERR_MALFORMED_NAME;
-    }
-    source->cursor++;
-    gen_name[gen_read_chars] = '\0';
-    *out_generator = *(void**) mtpl_htable_search(gen_name, generators);
-    if (!out_generator) {
-        return MTPL_ERR_UNKNOWN_KEY;
-    }
-    return MTPL_SUCCESS;
-}
-
 static mtpl_result perform_substitution(
     mtpl_generator generator,
     const mtpl_allocators* allocators,
@@ -41,31 +15,47 @@ static mtpl_result perform_substitution(
     mtpl_buffer* out_buffer
 ) {
     mtpl_generator sub_generator;
-    mtpl_result result = MTPL_SUCCESS;
-    mtpl_buffer arg_buffer = {
-        .data = allocators->malloc(MTPL_DEFAULT_BUFSIZE),
-        .size = MTPL_DEFAULT_BUFSIZE
-    };
-    memset(arg_buffer.data, 0, MTPL_DEFAULT_BUFSIZE);
+    mtpl_result result;
+    mtpl_buffer* gen_name;
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &gen_name);
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    mtpl_buffer* arg_buffer;
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &arg_buffer);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_gen_name;
+    }
+    memset(arg_buffer->data, 0, MTPL_DEFAULT_BUFSIZE);
 
     while (true) {
         switch (source->data[source->cursor]) {
         case '[':
+            source->cursor++;
             // Lookup generator name and begin new substitution.
-            result = lookup_generator(generators, source, &sub_generator);
+            result = mtpl_buffer_extract_word(
+                '>',
+                allocators,
+                (mtpl_buffer*) source,
+                gen_name
+            );
             if (result != MTPL_SUCCESS) {
-                goto finish_substitution;
+                goto cleanup_arg_buffer;
+            }
+            sub_generator = mtpl_htable_search(gen_name->data, generators);
+            if (!sub_generator) {
+                goto cleanup_arg_buffer;
             }
             result = perform_substitution(
-                sub_generator,
+                *(void**) sub_generator,
                 allocators,
                 source,
                 generators,
                 properties,
-                &arg_buffer
+                arg_buffer
             );
             if (result != MTPL_SUCCESS) {
-                goto finish_substitution;
+                goto cleanup_arg_buffer;
             }
             break;
         case ']':
@@ -78,28 +68,35 @@ static mtpl_result perform_substitution(
             // Escape next character if not 0.
             if (!source->data[++(source->cursor)]) {
                 result = MTPL_ERR_SYNTAX;
-                goto finish_substitution;
+                goto cleanup_arg_buffer;
             }
             // Fall through.
         default:
             // Read into the arg buffer.
-            if (arg_buffer.cursor >= arg_buffer.size) {
+            if (arg_buffer->cursor >= arg_buffer->size) {
                 MTPL_REALLOC_CHECKED(
                     allocators,
-                    arg_buffer.data,
-                    arg_buffer.size * 2
+                    arg_buffer->data,
+                    arg_buffer->size * 2, {
+                        result = MTPL_ERR_MEMORY;
+                        goto cleanup_arg_buffer;
+                    }
                 );
-                arg_buffer.size *= 2;
+                arg_buffer->size *= 2;
             }
-            arg_buffer.data[arg_buffer.cursor++]
+            arg_buffer->data[arg_buffer->cursor++]
                 = source->data[source->cursor++];
             break;
         }
     }
 
 finish_substitution:
-    generator(arg_buffer.data, allocators, generators, properties, out_buffer);
-    allocators->free(arg_buffer.data);
+    generator(allocators, arg_buffer, generators, properties, out_buffer);
+
+cleanup_arg_buffer:
+    mtpl_buffer_free(allocators, arg_buffer);
+cleanup_gen_name:
+    mtpl_buffer_free(allocators, gen_name);
     return result;
 }
 

@@ -1,127 +1,103 @@
 #include <mintpl/generators.h>
 #include <mintpl/substitute.h>
 
-#include <stdbool.h>
 #include <string.h>
 
-inline static bool is_whitespace(char c) {
-    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-}
-
-static const char* trim_whitespace(const char* text) {
-    while (*text && is_whitespace(*text)) {
-        text++;
-    }
-
-    return text;
-}
-
-static size_t word_length(const char* text, char delimiter) {
-    text = trim_whitespace(text);
-    size_t i = 0;
-
-    while (
-        text[i] 
-        && delimiter == 0 ? !is_whitespace(text[i]) : text[i] != delimiter
-    ) {
-        i++;
-    }
-
-    return i++;
-}
-
-static const char* read_word(
-    const char* text,
-    char delimiter,
-    size_t max_len,
-    char* out_word
-) {
-    text = trim_whitespace(text);
-    size_t i = 0;
-
-    while (
-        text[i] 
-        && delimiter == 0 ? !is_whitespace(text[i]) : text[i] != delimiter
-        && i < max_len - 1
-    ) {
-        out_word[i] = text[i];
-        i++;
-    }
-    out_word[i] = '\0';
-
-    return trim_whitespace(&text[++i]);
-}
-
 mtpl_result mtpl_generator_copy(
-    const char* arg,
     const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
     mtpl_hashtable* generators,
     mtpl_hashtable* properties,
-    mtpl_buffer* out_buffer
+    mtpl_buffer* out
 ) {
-    return mtpl_buffer_print(arg, allocators, out_buffer);
+    return mtpl_buffer_print(arg, allocators, out);
 }
 
 mtpl_result mtpl_generator_replace(
-    const char* arg,
     const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
     mtpl_hashtable* generators,
     mtpl_hashtable* properties,
-    mtpl_buffer* out_buffer
+    mtpl_buffer* out
 ) {
-    const char* value = mtpl_htable_search(arg, properties);
-    if (!value) {
+    const mtpl_buffer value = { mtpl_htable_search(arg->data, properties) };
+    if (!value.data) {
         return MTPL_ERR_UNKNOWN_KEY;
     }
     
-    return mtpl_buffer_print(value, allocators, out_buffer);
+    return mtpl_buffer_print(&value, allocators, out);
 }
 
 mtpl_result mtpl_generator_for(
-    const char* arg,
     const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
     mtpl_hashtable* generators,
     mtpl_hashtable* properties,
-    mtpl_buffer* out_buffer
+    mtpl_buffer* out
 ) {
-    mtpl_result result = MTPL_SUCCESS;
-    char variable[256];
-    char item[256];
-    size_t list_len = word_length(arg, 0) + 1;
-    char* list = allocators->malloc(list_len);
-    const char* list_cursor = list;
+    mtpl_buffer* variable;
+    mtpl_buffer* item;
+    mtpl_buffer* list;
+    mtpl_result result = mtpl_buffer_create(
+        allocators,
+        MTPL_DEFAULT_BUFSIZE,
+        &variable
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &item);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_variable;
+    }
+    mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &list);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_item;
+    }
     
-    arg = read_word(arg, 0, list_len, list);
-    arg = read_word(arg, 0, 256, variable);
+    result = mtpl_buffer_extract_word(0, allocators, arg, list);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_item;
+    }
+    result = mtpl_buffer_extract_word(0, allocators, arg, variable);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_item;
+    }
 
-    while (*list_cursor) {
-        const char* list_post = read_word(list_cursor, ';', 256, item);
+    while (list->data[list->cursor]) {
+        result = mtpl_buffer_extract_word(';', allocators, list, item);
+        if (result != MTPL_SUCCESS) {
+            break;
+        }
+        size_t len = strlen(item->data) + 1;
         result = mtpl_htable_insert(
-           variable,
-           item,
-           list_post - list_cursor,
+           variable->data,
+           item->data,
+           len,
            allocators,
            properties
         );
         if (result != MTPL_SUCCESS) {
-            goto cleanup_list;
+            break;
         }
-        list_cursor = list_post;
 
         result = mtpl_substitute(
-            arg,
+            &arg->data[arg->cursor],
             allocators,
             generators,
             properties,
-            out_buffer
+            out
         );
         if (result != MTPL_SUCCESS) {
-            goto cleanup_list;
+            break;
         }
     }
 
-cleanup_list:
-    allocators->free(list);
+    mtpl_buffer_free(allocators, list);
+cleanup_item:
+    mtpl_buffer_free(allocators, item);
+cleanup_variable:
+    mtpl_buffer_free(allocators, variable);
     return result;
 }
 

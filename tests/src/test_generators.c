@@ -15,8 +15,9 @@ static const mtpl_allocators allocs = { malloc, realloc, free };
 void test_generator_copy(void** state) {
     char out[32] = { 0 };
     mtpl_buffer buf = { .data = out, .size = 32 };
+    mtpl_buffer input = { "foo" };
 
-    mtpl_result result = mtpl_generator_copy("foo", &allocs, NULL, NULL, &buf);
+    mtpl_result result = mtpl_generator_copy(&allocs, &input, NULL, NULL, &buf);
 
     assert_int_equal(result, MTPL_SUCCESS);
     assert_string_equal("foo", out);
@@ -25,6 +26,7 @@ void test_generator_copy(void** state) {
 void test_generator_replace(void** state) {
     char out[32] = { 0 };
     mtpl_buffer buf = { .data = out, .size = 32 };
+    mtpl_buffer input = { "foo" };
 
     mtpl_hashtable* properties;
     mtpl_htable_create(&allocs, &properties);
@@ -32,8 +34,8 @@ void test_generator_replace(void** state) {
 
     mtpl_htable_insert("foo", "bar", 4, &allocs, properties);
     mtpl_result result = mtpl_generator_replace(
-        "foo",
         &allocs,
+        &input,
         NULL,
         properties,
         &buf
@@ -62,9 +64,10 @@ void test_generator_for(void** state) {
         generators
     );
 
+    mtpl_buffer input1 = { "1;2;3;4 meta [:>[=>meta]! ]" };
     mtpl_result result = mtpl_generator_for(
-        "1;2;3;4 meta [:>[=>meta]! ]",
         &allocs,
+        &input1,
         generators,
         properties,
         &buf
@@ -77,9 +80,11 @@ void test_generator_for(void** state) {
     buf = (mtpl_buffer) { .data = out, .size = 32 };
     mtpl_htable_insert("foo", "baz ", 5, &allocs, properties);
     mtpl_htable_insert("bar", "qux", 4, &allocs, properties);
+    
+    mtpl_buffer input2 = { "foo;bar meta [=>[=>meta]]" };
     result = mtpl_generator_for(
-        "foo;bar meta [=>[=>meta]]",
         &allocs,
+        &input2,
         generators,
         properties,
         &buf
