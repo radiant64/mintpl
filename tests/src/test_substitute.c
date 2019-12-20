@@ -40,7 +40,7 @@ void test_nested(void** state) {
         generators
     );
     mtpl_result result = mtpl_substitute(
-        "[:>foo [:>bar]]",
+        "[:>foo[:>bar]]",
         &allocators,
         generators,
         NULL,
@@ -88,7 +88,7 @@ void test_replace(void** state) {
         properties
     );
     mtpl_result result = mtpl_substitute(
-        "[:>[=>test1] [=>test2]]",
+        "[:>[=>test1][=>test2]]",
         &allocators,
         generators,
         properties,
@@ -102,7 +102,7 @@ void test_escape(void** state) {
     char text[256] = { 0 };
     mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
     mtpl_result result = mtpl_substitute(
-        "\\[:>foo bar\\]",
+        "\\[:>foobar\\]",
         &allocators,
         NULL,
         NULL,

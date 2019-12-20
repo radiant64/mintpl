@@ -30,6 +30,12 @@ mtpl_result mtpl_buffer_free(
     mtpl_buffer* buffer
 );
 
+mtpl_result mtpl_buffer_print(
+    const char* text,
+    const mtpl_allocators* allocators,
+    mtpl_buffer* buffer
+);
+
 #ifdef _cplusplus
 }
 #endif

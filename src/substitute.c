@@ -40,12 +40,13 @@ static mtpl_result perform_substitution(
     mtpl_hashtable* properties,
     mtpl_buffer* out_buffer
 ) {
+    mtpl_generator sub_generator;
     mtpl_result result = MTPL_SUCCESS;
     mtpl_buffer arg_buffer = {
         .data = allocators->malloc(MTPL_DEFAULT_BUFSIZE),
         .size = MTPL_DEFAULT_BUFSIZE
     };
-    mtpl_generator sub_generator;
+    memset(arg_buffer.data, 0, MTPL_DEFAULT_BUFSIZE);
 
     while (true) {
         switch (source->data[source->cursor]) {
