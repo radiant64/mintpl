@@ -70,7 +70,7 @@ static mtpl_result perform_substitution(
             break;
         case ']':
             source->cursor++;
-            // Fallthrough
+            // Fall through.
         case '\0':
             // End current substitution and return to parent.
             goto finish_substitution;
