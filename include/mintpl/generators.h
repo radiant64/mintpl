@@ -16,6 +16,14 @@ typedef mtpl_result(*mtpl_generator)(
     mtpl_buffer* out
 );
 
+mtpl_result mtpl_generator_nop(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
 mtpl_result mtpl_generator_copy(
     const mtpl_allocators* allocators,
     mtpl_buffer* arg,
@@ -41,6 +49,22 @@ mtpl_result mtpl_generator_for(
 );
 
 mtpl_result mtpl_generator_if(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
+mtpl_result mtpl_generator_not(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
+mtpl_result mtpl_generator_equals(
     const mtpl_allocators* allocators,
     mtpl_buffer* arg,
     mtpl_hashtable* generators,

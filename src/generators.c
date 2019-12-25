@@ -8,6 +8,16 @@ inline static bool is_whitespace(char c) {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
+mtpl_result mtpl_generator_nop(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return MTPL_SUCCESS;
+}
+
 mtpl_result mtpl_generator_copy(
     const mtpl_allocators* allocators,
     mtpl_buffer* arg,
@@ -135,5 +145,106 @@ mtpl_result mtpl_generator_if(
     default:
         return MTPL_ERR_SYNTAX;
     }
+}
+
+mtpl_result mtpl_generator_not(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    if (arg->data[0] != '#' || (arg->data[2] && !is_whitespace(arg->data[2]))) {
+        return MTPL_ERR_SYNTAX;
+    }
+
+    if (out->size < 2) {
+        MTPL_REALLOC_CHECKED(
+            allocators,
+            out->data,
+            2,
+            return MTPL_ERR_MEMORY
+        );
+        out->size = 2;
+    }
+
+    switch (arg->data[1]) {
+    case 't':
+        out->data[1] = 'f';
+        break;
+    case 'f':
+        out->data[1] = 't';
+        break;
+    default:
+        return MTPL_ERR_SYNTAX;
+    }
+
+    out->data[0] = '#';
+    out->data[2] = '\0';
+
+    return MTPL_SUCCESS;
+}
+
+mtpl_result mtpl_generator_equals(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    mtpl_result result;
+    mtpl_buffer state = { "#f" };
+    mtpl_buffer* sub;
+    mtpl_buffer* sub_gen[2];
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &sub);
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &sub_gen[0]);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_sub;
+    }
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &sub_gen[1]);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_sub_gen_0;
+    }
+    
+    int buf = 0;
+    bool has_prev_value = false;
+    while (arg->data[arg->cursor]) {
+        sub->cursor = 0;
+        result = mtpl_buffer_extract_sub(allocators, arg, sub);
+        if (result != MTPL_SUCCESS) {
+            goto cleanup_sub_gen_1;
+        }
+        result = mtpl_substitute(
+            sub->data,
+            allocators,
+            generators,
+            properties,
+            sub_gen[buf]
+        );
+        sub_gen[buf]->data[sub_gen[buf]->cursor] = '\0';
+        if (
+            has_prev_value 
+            && strcmp(sub_gen[buf]->data, sub_gen[buf ^ 1]->data) != 0
+        ) {
+            result = mtpl_buffer_print(&state, allocators, out);
+            goto cleanup_sub_gen_1;
+        }
+        buf ^= 1;
+        has_prev_value = true;
+    }
+
+    state.data = "#t";
+    result = mtpl_buffer_print(&state, allocators, out);
+
+cleanup_sub_gen_1:
+    mtpl_buffer_free(allocators, sub_gen[1]);
+cleanup_sub_gen_0:
+    mtpl_buffer_free(allocators, sub_gen[0]);
+cleanup_sub:
+    mtpl_buffer_free(allocators, sub);
+    return result;
 }
 

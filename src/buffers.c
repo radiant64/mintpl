@@ -27,8 +27,11 @@ static size_t extract_length(
     size_t i = 0;
 
     while (
-        text[i] 
-        && (delimiter == 0 ? !is_whitespace(text[i]) : text[i] != delimiter)
+        text[i]
+        && (
+            (i > 0 && text[i - 1] == '\\')
+            || (delimiter == 0 ? !is_whitespace(text[i]) : text[i] != delimiter)
+        )
     ) {
         ++i;
     }
@@ -90,7 +93,6 @@ mtpl_result mtpl_buffer_extract(
     mtpl_buffer* input,
     mtpl_buffer* out
 ) {
-    size_t i = 0;
     trim_whitespace(input);
 
     size_t len = extract_length(input, delimiter);
@@ -113,5 +115,55 @@ mtpl_result mtpl_buffer_extract(
     input->cursor += len;
     trim_whitespace(input);
     return MTPL_SUCCESS;
+}
+
+mtpl_result mtpl_buffer_extract_sub(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* input,
+    mtpl_buffer* out
+) {
+    trim_whitespace(input);
+    const char opener = input->data[input->cursor];
+    if (opener == '{') {
+        mtpl_result result = mtpl_buffer_extract('}', allocators, input, out);
+        out->data[out->cursor++] = '}';
+        out->data[out->cursor] = '\0';
+        return result;
+    } else if (opener != '[') {
+        return mtpl_buffer_extract(0, allocators, input, out);
+    }
+
+    size_t level = 1;
+    while (level && input->data[input->cursor]) {
+        switch (input->data[input->cursor]) {
+        case '[':
+            level++;
+            goto copy_char;
+        case ']':
+            level--;
+            goto copy_char;
+        case '\\':
+            // Escape next character if not 0.
+            if (!input->data[++(input->cursor)]) {
+                return MTPL_ERR_SYNTAX;
+            }
+            // Fall through.
+        default:
+copy_char:
+            if (out->cursor >= out->size) {
+                MTPL_REALLOC_CHECKED(
+                    allocators,
+                    out->data,
+                    out->size * 2,
+                    return MTPL_ERR_MEMORY
+                );
+                out->size *= 2;
+            }
+            out->data[out->cursor++] = input->data[input->cursor++];
+            break;
+        }
+    }
+
+    return level > 1 ? MTPL_ERR_SYNTAX : MTPL_SUCCESS;
 }
 

@@ -133,11 +133,63 @@ void test_generator_if(void** state) {
     assert_string_equal("", out);
 }
 
+void test_generator_not(void** state) {
+    char out[32] = { 0 };
+    mtpl_buffer buf = { .data = out, .size = 32 };
+
+    mtpl_buffer i1 = { "#f" };
+    mtpl_result result = mtpl_generator_not(&allocs, &i1, NULL, NULL, &buf);
+
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
+    
+    buf = (mtpl_buffer) { .data = out, .size = 32 };
+    
+    mtpl_buffer i2 = { "#t" };
+    result = mtpl_generator_not(&allocs, &i2, NULL, NULL, &buf);
+
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#f", out);
+}
+
+void test_generator_equals(void** state) {
+    char out[32] = { 0 };
+    mtpl_buffer buf = { .data = out, .size = 32 };
+
+    mtpl_hashtable* generators;
+    mtpl_htable_create(&allocs, &generators);
+    mtpl_generator copy = mtpl_generator_copy;
+    mtpl_htable_insert(":", &copy, sizeof(mtpl_generator), &allocs, generators);
+
+    mtpl_buffer input1 = { "foo [:>foo]" };
+    mtpl_result result = mtpl_generator_equals(
+        &allocs,
+        &input1,
+        generators,
+        NULL,
+        &buf
+    );
+
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
+    
+    memset(out, 0, 32);
+    buf = (mtpl_buffer) { .data = out, .size = 32 };
+    
+    mtpl_buffer input2 = { "foo bar" };
+    result = mtpl_generator_equals(&allocs, &input2, generators, NULL, &buf);
+
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#f", out);
+}
+
 const struct CMUnitTest generators_tests[] = {
     cmocka_unit_test(test_generator_copy),
     cmocka_unit_test(test_generator_replace),
     cmocka_unit_test(test_generator_for),
-    cmocka_unit_test(test_generator_if)
+    cmocka_unit_test(test_generator_if),
+    cmocka_unit_test(test_generator_not),
+    cmocka_unit_test(test_generator_equals)
 };
 
 int main(void) {

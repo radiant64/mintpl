@@ -10,11 +10,23 @@ static mtpl_result add_default_generators(
     const mtpl_allocators* allocators,
     mtpl_hashtable* generators
 ) {
+    mtpl_generator nop = mtpl_generator_nop;
     mtpl_generator copy = mtpl_generator_copy;
     mtpl_generator replace = mtpl_generator_replace;
     mtpl_generator genfor = mtpl_generator_for;
     mtpl_generator genif = mtpl_generator_if;
+    mtpl_generator not = mtpl_generator_not;
     mtpl_result result = mtpl_htable_insert(
+        "!",
+        &nop,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
         ":",
         &copy,
         sizeof(mtpl_generator),
@@ -47,6 +59,16 @@ static mtpl_result add_default_generators(
     result = mtpl_htable_insert(
         "if",
         &genif,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "not",
+        &not,
         sizeof(mtpl_generator),
         allocators,
         generators

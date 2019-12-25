@@ -43,6 +43,12 @@ mtpl_result mtpl_buffer_extract(
     mtpl_buffer* out
 );
 
+mtpl_result mtpl_buffer_extract_sub(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* input,
+    mtpl_buffer* out
+);
+
 #ifdef _cplusplus
 }
 #endif
