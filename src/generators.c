@@ -1,7 +1,12 @@
 #include <mintpl/generators.h>
 #include <mintpl/substitute.h>
 
+#include <stdbool.h>
 #include <string.h>
+
+inline static bool is_whitespace(char c) {
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
 
 mtpl_result mtpl_generator_copy(
     const mtpl_allocators* allocators,
@@ -55,17 +60,19 @@ mtpl_result mtpl_generator_for(
         goto cleanup_item;
     }
     
-    result = mtpl_buffer_extract_word(0, allocators, arg, list);
+    result = mtpl_buffer_extract(0, allocators, arg, list);
     if (result != MTPL_SUCCESS) {
         goto cleanup_item;
     }
-    result = mtpl_buffer_extract_word(0, allocators, arg, variable);
+    list->cursor = 0;
+    result = mtpl_buffer_extract(0, allocators, arg, variable);
     if (result != MTPL_SUCCESS) {
         goto cleanup_item;
     }
+    variable->cursor = 0;
 
     while (list->data[list->cursor]) {
-        result = mtpl_buffer_extract_word(';', allocators, list, item);
+        result = mtpl_buffer_extract(';', allocators, list, item);
         if (result != MTPL_SUCCESS) {
             break;
         }
@@ -77,6 +84,7 @@ mtpl_result mtpl_generator_for(
            allocators,
            properties
         );
+        item->cursor = 0;
         if (result != MTPL_SUCCESS) {
             break;
         }
@@ -99,5 +107,33 @@ cleanup_item:
 cleanup_variable:
     mtpl_buffer_free(allocators, variable);
     return result;
+}
+
+mtpl_result mtpl_generator_if(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    if (arg->data[0] != '#' || !is_whitespace(arg->data[2])) {
+        return MTPL_ERR_SYNTAX;
+    }
+
+    switch (arg->data[1]) {
+    case 't':
+        arg->cursor = 3;
+        return mtpl_substitute(
+            &arg->data[arg->cursor],
+            allocators,
+            generators,
+            properties,
+            out
+        );
+    case 'f':
+        return MTPL_SUCCESS;
+    default:
+        return MTPL_ERR_SYNTAX;
+    }
 }
 

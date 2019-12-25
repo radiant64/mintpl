@@ -12,6 +12,8 @@ static mtpl_result add_default_generators(
 ) {
     mtpl_generator copy = mtpl_generator_copy;
     mtpl_generator replace = mtpl_generator_replace;
+    mtpl_generator genfor = mtpl_generator_for;
+    mtpl_generator genif = mtpl_generator_if;
     mtpl_result result = mtpl_htable_insert(
         ":",
         &copy,
@@ -25,6 +27,26 @@ static mtpl_result add_default_generators(
     result = mtpl_htable_insert(
         "=",
         &replace,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "for",
+        &genfor,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "if",
+        &genif,
         sizeof(mtpl_generator),
         allocators,
         generators

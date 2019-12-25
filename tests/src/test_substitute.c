@@ -26,6 +26,20 @@ void test_plaintext(void** state) {
     assert_string_equal("foo bar", text);
 }
 
+void test_quote(void** state) {
+    char text[256] = { 0 };
+    mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
+    mtpl_result result = mtpl_substitute(
+        "{[:>test]}",
+        &allocators,
+        NULL,
+        NULL,
+        &buffer
+    );
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("[:>test]", text);
+}
+
 void test_nested(void** state) {
     char text[256] = { 0 };
     mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
@@ -47,7 +61,7 @@ void test_nested(void** state) {
         &buffer
     );
     assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("foo bar", text);
+    assert_string_equal("foobar", text);
 }
 
 void test_replace(void** state) {
@@ -95,7 +109,7 @@ void test_replace(void** state) {
         &buffer
     );
     assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("foo bar", text);
+    assert_string_equal("foobar", text);
 }
 
 void test_escape(void** state) {
@@ -109,11 +123,12 @@ void test_escape(void** state) {
         &buffer
     );
     assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("[:>foo bar]", text);
+    assert_string_equal("[:>foobar]", text);
 }
 
 const struct CMUnitTest substitute_tests[] = {
     cmocka_unit_test(test_plaintext),
+    cmocka_unit_test(test_quote),
     cmocka_unit_test(test_nested),
     cmocka_unit_test(test_replace),
     cmocka_unit_test(test_escape)

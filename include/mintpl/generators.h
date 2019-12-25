@@ -40,6 +40,14 @@ mtpl_result mtpl_generator_for(
     mtpl_buffer* out
 );
 
+mtpl_result mtpl_generator_if(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
 #ifdef _cplusplus
 }
 #endif

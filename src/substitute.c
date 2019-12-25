@@ -33,7 +33,7 @@ static mtpl_result perform_substitution(
         case '[':
             source->cursor++;
             // Lookup generator name and begin new substitution.
-            result = mtpl_buffer_extract_word(
+            result = mtpl_buffer_extract(
                 '>',
                 allocators,
                 (mtpl_buffer*) source,
@@ -44,14 +44,28 @@ static mtpl_result perform_substitution(
             }
             sub_generator = mtpl_htable_search(gen_name->data, generators);
             if (!sub_generator) {
+                result = MTPL_ERR_UNKNOWN_KEY;
                 goto cleanup_arg_buffer;
             }
+            gen_name->cursor = 0;
             result = perform_substitution(
                 *(void**) sub_generator,
                 allocators,
                 source,
                 generators,
                 properties,
+                arg_buffer
+            );
+            if (result != MTPL_SUCCESS) {
+                goto cleanup_arg_buffer;
+            }
+            break;
+        case '{':
+            source->cursor++;
+            result = mtpl_buffer_extract(
+                '}',
+                allocators,
+                (mtpl_buffer*) source,
                 arg_buffer
             );
             if (result != MTPL_SUCCESS) {

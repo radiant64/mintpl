@@ -36,7 +36,7 @@ mtpl_result mtpl_buffer_print(
     mtpl_buffer* output
 );
 
-mtpl_result mtpl_buffer_extract_word(
+mtpl_result mtpl_buffer_extract(
     char delimiter,
     const mtpl_allocators* allocators,
     mtpl_buffer* input,

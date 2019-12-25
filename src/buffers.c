@@ -16,7 +16,7 @@ static void trim_whitespace(mtpl_buffer* input) {
     }
 }
 
-static size_t extract_word_length(
+static size_t extract_length(
     const mtpl_buffer* input,
     char delimiter
 ) {
@@ -84,7 +84,7 @@ mtpl_result mtpl_buffer_print(
     return MTPL_SUCCESS;
 }
 
-mtpl_result mtpl_buffer_extract_word(
+mtpl_result mtpl_buffer_extract(
     char delimiter,
     const mtpl_allocators* allocators,
     mtpl_buffer* input,
@@ -93,12 +93,12 @@ mtpl_result mtpl_buffer_extract_word(
     size_t i = 0;
     trim_whitespace(input);
 
-    size_t len = extract_word_length(input, delimiter);
-    if (out->size < len) {
+    size_t len = extract_length(input, delimiter);
+    if (out->size < out->cursor + len) {
         size_t size = out->size;
         do {
             size *= 2;
-        } while (size < len);
+        } while (size < out->cursor + len);
         MTPL_REALLOC_CHECKED(
             allocators,
             out->data,
@@ -107,8 +107,9 @@ mtpl_result mtpl_buffer_extract_word(
         );
         out->size = size;
     }
-    memcpy(out->data, &input->data[input->cursor], len - 1);
-    out->data[len - 1] = '\0';
+    memcpy(&out->data[out->cursor], &input->data[input->cursor], len - 1);
+    out->data[out->cursor + len - 1] = '\0';
+    out->cursor += len - 1;
     input->cursor += len;
     trim_whitespace(input);
     return MTPL_SUCCESS;

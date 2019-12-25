@@ -94,10 +94,50 @@ void test_generator_for(void** state) {
     assert_string_equal("baz qux", out);
 }
 
+void test_generator_if(void** state) {
+    char out[32] = { 0 };
+    mtpl_buffer buf = { .data = out, .size = 32 };
+
+    mtpl_hashtable* generators;
+    mtpl_hashtable* properties;
+    mtpl_htable_create(&allocs, &generators);
+    mtpl_htable_create(&allocs, &properties);
+    mtpl_generator copy = mtpl_generator_copy;
+    mtpl_htable_insert(":", &copy, sizeof(mtpl_generator), &allocs, generators);
+
+    mtpl_buffer input1 = { "#f [=>foo]" }; // Would cause error if evaluated.
+    mtpl_result result = mtpl_generator_if(
+        &allocs,
+        &input1,
+        generators,
+        properties,
+        &buf
+    );
+
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("", out);
+    
+    memset(out, 0, 32);
+    buf = (mtpl_buffer) { .data = out, .size = 32 };
+    
+    mtpl_buffer input2 = { "#t [=>foo]" }; // Expect an error.
+    result = mtpl_generator_if(
+        &allocs,
+        &input2,
+        generators,
+        properties,
+        &buf
+    );
+
+    assert_int_equal(result, MTPL_ERR_UNKNOWN_KEY);
+    assert_string_equal("", out);
+}
+
 const struct CMUnitTest generators_tests[] = {
     cmocka_unit_test(test_generator_copy),
     cmocka_unit_test(test_generator_replace),
-    cmocka_unit_test(test_generator_for)
+    cmocka_unit_test(test_generator_for),
+    cmocka_unit_test(test_generator_if)
 };
 
 int main(void) {
