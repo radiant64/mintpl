@@ -191,6 +191,20 @@ void mtpl_free(mtpl_context* context) {
     context->allocators->free(context);
 }
 
+mtpl_result mtpl_set_generator(
+    const char* name,
+    mtpl_generator generator,
+    mtpl_context* context
+) {
+    return mtpl_htable_insert(
+        name,
+        generator,
+        sizeof(mtpl_generator), 
+        context->allocators,
+        context->generators
+    );
+}
+
 mtpl_result mtpl_set_property(
     const char* name,
     const char* value,

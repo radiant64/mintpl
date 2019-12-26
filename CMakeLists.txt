@@ -11,5 +11,6 @@ set(SOURCES
 )
 
 add_library(${PROJECT_NAME} ${SOURCES})
+add_subdirectory(standalone)
 add_subdirectory(tests)
 

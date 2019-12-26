@@ -2,7 +2,9 @@
 
 #include <mintpl/buffers.h>
 #include <mintpl/common.h>
+#include <mintpl/generators.h>
 #include <mintpl/hashtable.h>
+#include <mintpl/version.h>
 
 #ifdef _cplusplus
 extern "C" {
@@ -23,6 +25,12 @@ mtpl_result mtpl_init_custom_alloc(
 );
 
 void mtpl_free(mtpl_context* context);
+
+mtpl_result mtpl_set_generator(
+    const char* name,
+    mtpl_generator generator,
+    mtpl_context* context
+);
 
 mtpl_result mtpl_set_property(
     const char* name,
