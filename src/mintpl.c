@@ -16,6 +16,11 @@ static mtpl_result add_default_generators(
     mtpl_generator genfor = mtpl_generator_for;
     mtpl_generator genif = mtpl_generator_if;
     mtpl_generator not = mtpl_generator_not;
+    mtpl_generator eq = mtpl_generator_equals;
+    mtpl_generator gt = mtpl_generator_greater;
+    mtpl_generator lt = mtpl_generator_less;
+    mtpl_generator ge = mtpl_generator_gteq;
+    mtpl_generator le = mtpl_generator_lteq;
     mtpl_result result = mtpl_htable_insert(
         "!",
         &nop,
@@ -69,6 +74,56 @@ static mtpl_result add_default_generators(
     result = mtpl_htable_insert(
         "not",
         &not,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "eq",
+        &eq,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "gt",
+        &gt,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "lt",
+        &lt,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "ge",
+        &ge,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "le",
+        &le,
         sizeof(mtpl_generator),
         allocators,
         generators

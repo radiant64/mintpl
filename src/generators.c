@@ -185,8 +185,9 @@ mtpl_result mtpl_generator_not(
     return MTPL_SUCCESS;
 }
 
-mtpl_result mtpl_generator_equals(
+static mtpl_result generator_cmp(
     const mtpl_allocators* allocators,
+    bool(*compare)(const mtpl_buffer* a, const mtpl_buffer* b),
     mtpl_buffer* arg,
     mtpl_hashtable* generators,
     mtpl_hashtable* properties,
@@ -209,34 +210,39 @@ mtpl_result mtpl_generator_equals(
         goto cleanup_sub_gen_0;
     }
     
-    int buf = 0;
-    bool has_prev_value = false;
-    while (arg->data[arg->cursor]) {
-        sub->cursor = 0;
-        result = mtpl_buffer_extract_sub(allocators, arg, sub);
-        if (result != MTPL_SUCCESS) {
-            goto cleanup_sub_gen_1;
-        }
-        result = mtpl_substitute(
-            sub->data,
-            allocators,
-            generators,
-            properties,
-            sub_gen[buf]
-        );
-        sub_gen[buf]->data[sub_gen[buf]->cursor] = '\0';
-        if (
-            has_prev_value 
-            && strcmp(sub_gen[buf]->data, sub_gen[buf ^ 1]->data) != 0
-        ) {
-            result = mtpl_buffer_print(&state, allocators, out);
-            goto cleanup_sub_gen_1;
-        }
-        buf ^= 1;
-        has_prev_value = true;
+    result = mtpl_buffer_extract_sub(allocators, arg, sub);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_sub_gen_1;
     }
+    result = mtpl_substitute(
+        sub->data,
+        allocators,
+        generators,
+        properties,
+        sub_gen[0]
+    );
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_sub_gen_1;
+    }
+    sub_gen[0]->data[sub_gen[0]->cursor] = '\0';
+    sub->cursor = 0;
+    result = mtpl_buffer_extract_sub(allocators, arg, sub);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_sub_gen_1;
+    }
+    result = mtpl_substitute(
+        sub->data,
+        allocators,
+        generators,
+        properties,
+        sub_gen[1]
+    );
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_sub_gen_1;
+    }
+    sub_gen[1]->data[sub_gen[1]->cursor] = '\0';
 
-    state.data = "#t";
+    state.data = compare(sub_gen[0], sub_gen[1]) ? "#t" : "#f";
     result = mtpl_buffer_print(&state, allocators, out);
 
 cleanup_sub_gen_1:
@@ -246,5 +252,75 @@ cleanup_sub_gen_0:
 cleanup_sub:
     mtpl_buffer_free(allocators, sub);
     return result;
+}
+
+static bool equals(const mtpl_buffer* a, const mtpl_buffer* b) {
+    return strcmp(a->data, b->data) == 0;
+}
+
+static bool greater(const mtpl_buffer* a, const mtpl_buffer* b) {
+    return strcmp(a->data, b->data) > 0;
+}
+
+static bool less(const mtpl_buffer* a, const mtpl_buffer* b) {
+    return strcmp(a->data, b->data) < 0;
+}
+
+static bool gteq(const mtpl_buffer* a, const mtpl_buffer* b) {
+    return strcmp(a->data, b->data) >= 0;
+}
+
+static bool lteq(const mtpl_buffer* a, const mtpl_buffer* b) {
+    return strcmp(a->data, b->data) <= 0;
+}
+
+mtpl_result mtpl_generator_equals(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return generator_cmp(allocators, equals, arg, generators, properties, out); 
+}
+
+mtpl_result mtpl_generator_greater(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return generator_cmp(allocators, greater, arg, generators, properties, out); 
+}
+
+mtpl_result mtpl_generator_less(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return generator_cmp(allocators, less, arg, generators, properties, out); 
+}
+
+mtpl_result mtpl_generator_gteq(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return generator_cmp(allocators, gteq, arg, generators, properties, out); 
+}
+
+mtpl_result mtpl_generator_lteq(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return generator_cmp(allocators, lteq, arg, generators, properties, out); 
 }
 

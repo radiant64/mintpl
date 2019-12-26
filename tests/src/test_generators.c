@@ -152,7 +152,7 @@ void test_generator_not(void** state) {
     assert_string_equal("#f", out);
 }
 
-void test_generator_equals(void** state) {
+void test_generator_compare(void** state) {
     char out[32] = { 0 };
     mtpl_buffer buf = { .data = out, .size = 32 };
 
@@ -169,7 +169,6 @@ void test_generator_equals(void** state) {
         NULL,
         &buf
     );
-
     assert_int_equal(result, MTPL_SUCCESS);
     assert_string_equal("#t", out);
     
@@ -181,6 +180,66 @@ void test_generator_equals(void** state) {
 
     assert_int_equal(result, MTPL_SUCCESS);
     assert_string_equal("#f", out);
+    
+    buf.cursor = 0;
+    mtpl_buffer input3 = { "12 23" };
+    result = mtpl_generator_greater(&allocs, &input3, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#f", out);
+    
+    buf.cursor = 0;
+    mtpl_buffer input4 = { "23 12" };
+    result = mtpl_generator_greater(&allocs, &input4, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
+    
+    buf.cursor = 0;
+    input3.cursor = 0;
+    result = mtpl_generator_less(&allocs, &input3, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
+    
+    buf.cursor = 0;
+    input4.cursor = 0;
+    result = mtpl_generator_less(&allocs, &input4, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#f", out);
+    
+    buf.cursor = 0;
+    mtpl_buffer input5 = { "22 22" };
+    result = mtpl_generator_gteq(&allocs, &input5, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
+    
+    buf.cursor = 0;
+    input4.cursor = 0;
+    result = mtpl_generator_gteq(&allocs, &input4, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
+    
+    buf.cursor = 0;
+    input3.cursor = 0;
+    result = mtpl_generator_gteq(&allocs, &input3, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#f", out);
+    
+    buf.cursor = 0;
+    input5.cursor = 0;
+    result = mtpl_generator_lteq(&allocs, &input5, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
+    
+    buf.cursor = 0;
+    input4.cursor = 0;
+    result = mtpl_generator_lteq(&allocs, &input4, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#f", out);
+    
+    buf.cursor = 0;
+    input3.cursor = 0;
+    result = mtpl_generator_lteq(&allocs, &input3, generators, NULL, &buf);
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
 }
 
 const struct CMUnitTest generators_tests[] = {
@@ -189,7 +248,7 @@ const struct CMUnitTest generators_tests[] = {
     cmocka_unit_test(test_generator_for),
     cmocka_unit_test(test_generator_if),
     cmocka_unit_test(test_generator_not),
-    cmocka_unit_test(test_generator_equals)
+    cmocka_unit_test(test_generator_compare)
 };
 
 int main(void) {
