@@ -85,12 +85,17 @@ build script will automatically download and build cmocka if possible.
    - To create a debug build, change `CMAKE_BUILD_TYPE` to `Debug`.
    - To build a shared library, set the `SHARED_LIBRARY` variable from the
      command line: `cmake .. -DCMAKE_BUILD_TYPE=Debug -DSHARED_LIBRARY=1`
-3. Upon successful completion, the library file will be located directly within
+3. A project will now have been generated, based on whatever build system is the
+   platform default. Build and install as you most commonly would (if in doubt,
+   type `make`).
+4. Upon successful completion, the library file will be located directly within
    the build directory.
    - Tests can be run by invoking the executables in the `tests` subdirectory.
    - There's a proof-of-concept standalone tool in the `standalone` folder,
      called `mintpl-cli`. It can be used to process templates that only make use
      of built-in generators.
+   To install, build the `install` target, with superuser privileges if
+   necessary. This will install both the library and a pkg-config recipe.
 
 ## License
 
