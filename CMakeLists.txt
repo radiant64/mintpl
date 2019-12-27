@@ -10,7 +10,11 @@ set(SOURCES
     src/substitute.c
 )
 
-add_library(${PROJECT_NAME} ${SOURCES})
+if(SHARED_LIBRARY)
+    add_library(${PROJECT_NAME} SHARED ${SOURCES})
+else()
+    add_library(${PROJECT_NAME} STATIC ${SOURCES})
+endif()
 add_subdirectory(standalone)
 add_subdirectory(tests)
 
