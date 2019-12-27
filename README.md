@@ -72,6 +72,7 @@ Have a look at this small, silly, example.
 - Currently there's a lack of built in arithmetic and string manipulation
   operators.
 - No API documentation.
+- No built in generator for setting properties.
 
 ## Building/installing
 
