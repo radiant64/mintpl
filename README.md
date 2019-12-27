@@ -6,6 +6,17 @@ A minimalistic language for automatic text processing, implemented as a C (18)
 library. It is made specifically to be extended by the application from within
 it is used. As a language it bears some similarity to Tcl.
 
+### Example
+File: input.mtpl
+```
+Have a look at this [for>[=>adjectives] adj {[=>adj], }]example.
+```
+Invokation using `mintpl-cli`:
+```
+$ mintpl-cli -p adjectives="small;silly" input.mtpl
+Have a look at this small, silly, example.
+```
+
 ### Features/characteristics
 
 - Everything is a string.
@@ -25,7 +36,7 @@ it is used. As a language it bears some similarity to Tcl.
     Substitutions within quoted text are not evaluated within the current
     context, but are inserted verbatim.
   - Escape: `\c`  
-    Inserts the character `\c` unprocessed into the current context.
+    Inserts the character `c` unprocessed into the current context.
   - No special syntax forms; everything else is done using substitutions and
     quotes.
 - Basic built-in generators:
