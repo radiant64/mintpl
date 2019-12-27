@@ -95,7 +95,7 @@ build script will automatically download and build cmocka if possible.
      called `mintpl-cli`. It can be used to process templates that only make use
      of built-in generators.
 5. To install, build the `install` target, with superuser privileges if
-   necessary. This will install both the library and a pkg-config recipe.
+   necessary. This will install both the library and a `pkg-config` recipe.
 
 ## License
 
