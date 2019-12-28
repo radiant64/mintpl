@@ -45,6 +45,19 @@ void test_generator_replace(void** state) {
     assert_string_equal("bar", out);
 }
 
+void test_generator_let(void** state) {
+    mtpl_hashtable* properties;
+    mtpl_htable_create(&allocs, &properties);
+    
+    mtpl_buffer in = { "{my test} foo bar" };
+    mtpl_result res = mtpl_generator_let(&allocs, &in, NULL, properties, NULL);
+    assert_int_equal(res, MTPL_SUCCESS);
+
+    const char* found = mtpl_htable_search("my test", properties);
+    assert_non_null(found);
+    assert_string_equal(found, "foo bar");
+}
+
 void test_generator_for(void** state) {
     char out[32] = { 0 };
     mtpl_buffer buf = { .data = out, .size = 32 };
@@ -245,6 +258,7 @@ void test_generator_compare(void** state) {
 const struct CMUnitTest generators_tests[] = {
     cmocka_unit_test(test_generator_copy),
     cmocka_unit_test(test_generator_replace),
+    cmocka_unit_test(test_generator_let),
     cmocka_unit_test(test_generator_for),
     cmocka_unit_test(test_generator_if),
     cmocka_unit_test(test_generator_not),

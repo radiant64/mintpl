@@ -49,6 +49,10 @@ Have a look at this small, silly, example.
   - `!`  
     Nop generator. Does nothing with its argument string. Can be used for
     comments.
+  - `let`  
+    Syntax: `[let>VARIABLE VALUE]`  
+    Evaluates VARIABLE as a substitution, then sets the property named by the
+    substitution result to the result of evaluating VALUE.
   - `for`  
     Syntax: `[for>LIST VARIABLE SUBSTITUTION]`  
     Iterates over a semicolon separated list of items (items containing
@@ -72,7 +76,6 @@ Have a look at this small, silly, example.
 - Currently there's a lack of built in arithmetic and string manipulation
   operators.
 - No API documentation.
-- No built in generator for setting properties.
 
 ## Building/installing
 

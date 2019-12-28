@@ -43,6 +43,89 @@ mtpl_result mtpl_generator_replace(
     return mtpl_buffer_print(&value, allocators, out);
 }
 
+static mtpl_result extract_evaluate(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* in,
+    mtpl_buffer* tmp,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    mtpl_result result = mtpl_buffer_extract_sub(allocators, in, tmp);
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    return mtpl_substitute(tmp->data, allocators, generators, properties, out);
+}
+
+mtpl_result mtpl_generator_let(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    mtpl_buffer* sub;
+    mtpl_buffer* variable;
+    mtpl_buffer* value;
+
+    mtpl_result result = mtpl_buffer_create(
+        allocators,
+        MTPL_DEFAULT_BUFSIZE,
+        &sub
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &variable);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_sub;
+    }
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &value);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_variable;
+    }
+
+    result = extract_evaluate(
+        allocators,
+        arg,
+        sub,
+        generators,
+        properties,
+        variable
+    );
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_value;
+    }
+    result = mtpl_substitute(
+        &arg->data[arg->cursor],
+        allocators,
+        generators,
+        properties,
+        value
+    );
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_value;
+    }
+
+    result = mtpl_htable_insert(
+        variable->data,
+        value->data,
+        strlen(value->data),
+        allocators,
+        properties
+    );
+
+cleanup_value:
+    mtpl_buffer_free(allocators, value);
+cleanup_variable:
+    mtpl_buffer_free(allocators, variable);
+cleanup_sub:
+    mtpl_buffer_free(allocators, sub);
+
+    return result;
+}
+
 mtpl_result mtpl_generator_for(
     const mtpl_allocators* allocators,
     mtpl_buffer* arg,
@@ -65,7 +148,7 @@ mtpl_result mtpl_generator_for(
     if (result != MTPL_SUCCESS) {
         goto cleanup_variable;
     }
-    mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &list);
+    result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &list);
     if (result != MTPL_SUCCESS) {
         goto cleanup_item;
     }
