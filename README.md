@@ -76,6 +76,7 @@ Have a look at this small, silly, example.
 - Currently there's a lack of built in arithmetic and string manipulation
   generators.
 - No API documentation.
+- No Unicode support.
 
 ## Building/installing
 
