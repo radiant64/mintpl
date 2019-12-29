@@ -155,16 +155,27 @@ mtpl_result mtpl_generator_for(
     
     result = mtpl_buffer_extract(0, allocators, arg, list);
     if (result != MTPL_SUCCESS) {
-        goto cleanup_item;
+        goto cleanup_list;
     }
     list->cursor = 0;
     result = mtpl_buffer_extract(0, allocators, arg, variable);
     if (result != MTPL_SUCCESS) {
-        goto cleanup_item;
+        goto cleanup_list;
     }
     variable->cursor = 0;
 
+    mtpl_hashtable* scope = NULL;
     while (list->data[list->cursor]) {
+        if (!scope) {
+            result = mtpl_htable_create(allocators, &scope);
+            if (result != MTPL_SUCCESS) {
+                break;
+            }
+        } else {
+            static const size_t s = sizeof(mtpl_hashentry) * MTPL_HTABLE_SIZE;
+            memset(scope->entries, 0, s);
+            scope->count = 0;
+        }
         result = mtpl_buffer_extract(';', allocators, list, item);
         if (result != MTPL_SUCCESS) {
             break;
@@ -175,25 +186,29 @@ mtpl_result mtpl_generator_for(
            item->data,
            len,
            allocators,
-           properties
+           scope
         );
         item->cursor = 0;
         if (result != MTPL_SUCCESS) {
             break;
         }
 
+        scope->next = properties;
         result = mtpl_substitute(
             &arg->data[arg->cursor],
             allocators,
             generators,
-            properties,
+            scope,
             out
         );
+        scope->next = NULL;
         if (result != MTPL_SUCCESS) {
             break;
         }
     }
 
+    mtpl_htable_free(allocators, scope);
+cleanup_list:
     mtpl_buffer_free(allocators, list);
 cleanup_item:
     mtpl_buffer_free(allocators, item);

@@ -22,8 +22,8 @@ Have a look at this small, silly, example.
 - Everything is a string.
 - Depth-first evaluation.
 - Variables are available as key-value properties.
-- Scoping is technically possible due to the novel "linked hashtable" nature of
-  the property store. (Not yet implemented.)
+- Dynamically scoped variable lookup through linked hashtables. (Currently
+  used by the `for` generator.)
 - Not built for speed or continuous operation -- this is a "batch job" language.
 - Small -- at the time of writing a static release build of the entire library
   is well below 32 KiB.

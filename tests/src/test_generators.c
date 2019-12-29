@@ -76,8 +76,9 @@ void test_generator_for(void** state) {
         &allocs,
         generators
     );
+    mtpl_htable_insert("test", "ok", 3, &allocs, properties);
 
-    mtpl_buffer input1 = { "1;2;3;4 meta [:>[=>meta]! ]" };
+    mtpl_buffer input1 = { "1;2;3;4 meta [:>[=>meta]! [=>test] ]" };
     mtpl_result result = mtpl_generator_for(
         &allocs,
         &input1,
@@ -87,7 +88,7 @@ void test_generator_for(void** state) {
     );
 
     assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("1! 2! 3! 4! ", out);
+    assert_string_equal("1! ok 2! ok 3! ok 4! ok ", out);
     
     memset(out, 0, 32);
     buf = (mtpl_buffer) { .data = out, .size = 32 };

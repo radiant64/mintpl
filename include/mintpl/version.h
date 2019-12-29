@@ -1,7 +1,7 @@
 #pragma once
 
 #define MINTPL_VERSION_MAJOR 1
-#define MINTPL_VERSION_MINOR 1
+#define MINTPL_VERSION_MINOR 2
 #define MINTPL_VERSION_PATCH 0
 #define _STRINGIZED(MAJ, MIN, PAT) #MAJ"."#MIN"."#PAT
 
