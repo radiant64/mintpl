@@ -220,6 +220,7 @@ mtpl_result mtpl_set_property(
 }
 
 mtpl_result mtpl_parse_template(const char* source, mtpl_context* context) {
+    context->output->cursor = 0;
     return mtpl_substitute(
         source,
         context->allocators,
