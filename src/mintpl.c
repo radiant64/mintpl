@@ -198,7 +198,7 @@ mtpl_result mtpl_set_generator(
 ) {
     return mtpl_htable_insert(
         name,
-        generator,
+        &generator,
         sizeof(mtpl_generator), 
         context->allocators,
         context->generators
