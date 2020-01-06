@@ -84,6 +84,7 @@ mtpl_result mtpl_buffer_print(
 
     memcpy(&output->data[output->cursor], input->data, len);
     output->cursor += len;
+    output->data[output->cursor] = '\0';
     return MTPL_SUCCESS;
 }
 
