@@ -172,6 +172,7 @@ mtpl_result mtpl_generator_for(
                 break;
             }
         } else {
+            // FIXME: Keep scope between iterations.
             static const size_t s = sizeof(mtpl_hashentry) * MTPL_HTABLE_SIZE;
             memset(scope->entries, 0, s);
             scope->count = 0;
