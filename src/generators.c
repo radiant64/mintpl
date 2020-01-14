@@ -43,6 +43,25 @@ mtpl_result mtpl_generator_replace(
     return mtpl_buffer_print(&value, allocators, out);
 }
 
+mtpl_result mtpl_generator_has_prop(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    const mtpl_buffer value = { mtpl_htable_search(arg->data, properties) };
+    out->data[out->cursor] = '#';
+    out->data[out->cursor + 2] = '\0';
+    if (value.data) {
+        out->data[out->cursor + 1] = 't';
+    } else {
+        out->data[out->cursor + 1] = 'f';
+    }
+    out->cursor += 2;
+    
+    return MTPL_SUCCESS;
+}
 static mtpl_result extract_evaluate(
     const mtpl_allocators* allocators,
     mtpl_buffer* in,

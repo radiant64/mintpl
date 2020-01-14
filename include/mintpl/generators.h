@@ -40,6 +40,14 @@ mtpl_result mtpl_generator_replace(
     mtpl_buffer* out
 );
 
+mtpl_result mtpl_generator_has_prop(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
 mtpl_result mtpl_generator_let(
     const mtpl_allocators* allocators,
     mtpl_buffer* arg,

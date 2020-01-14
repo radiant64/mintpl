@@ -45,6 +45,40 @@ void test_generator_replace(void** state) {
     assert_string_equal("bar", out);
 }
 
+void test_generator_has_prop(void** state) {
+    char out[32] = { 0 };
+    mtpl_buffer buf = { .data = out, .size = 32 };
+    mtpl_buffer input1 = { "foo" };
+
+    mtpl_hashtable* properties;
+    mtpl_htable_create(&allocs, &properties);
+    assert_non_null(properties);
+
+    mtpl_htable_insert("foo", "bar", 4, &allocs, properties);
+    
+    mtpl_result result = mtpl_generator_has_prop(
+        &allocs,
+        &input1,
+        NULL,
+        properties,
+        &buf
+    );
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#t", out);
+    
+    mtpl_buffer input2 = { "bar" };
+    buf.cursor = 0;
+    result = mtpl_generator_has_prop(
+        &allocs,
+        &input2,
+        NULL,
+        properties,
+        &buf
+    );
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("#f", out);
+}
+
 void test_generator_let(void** state) {
     mtpl_hashtable* properties;
     mtpl_htable_create(&allocs, &properties);
@@ -259,6 +293,7 @@ void test_generator_compare(void** state) {
 const struct CMUnitTest generators_tests[] = {
     cmocka_unit_test(test_generator_copy),
     cmocka_unit_test(test_generator_replace),
+    cmocka_unit_test(test_generator_has_prop),
     cmocka_unit_test(test_generator_let),
     cmocka_unit_test(test_generator_for),
     cmocka_unit_test(test_generator_if),
