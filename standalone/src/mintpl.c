@@ -64,7 +64,7 @@ int process_invocation(int argc, char** argv, invocation_data* run) {
             }
             break;
         case 'v':
-            fprintf(stdout, l_version, VERSION, MINTPL_VERSION);
+            fprintf(stdout, l_version, VERSION, mtpl_version());
             return 0;
         default:
             fprintf(stderr, l_err_unknown_opt, opt);

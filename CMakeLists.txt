@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 project(mintpl 
-    VERSION 1.2.4
+    VERSION 1.3.0
     DESCRIPTION "Minimal Template Programming Language"
 )
 
@@ -10,6 +10,7 @@ set(SOURCES
     src/generators.c
     src/mintpl.c
     src/substitute.c
+    src/version.c
 )
 
 if(SHARED_LIBRARY)
