@@ -134,8 +134,8 @@ mtpl_result mtpl_buffer_extract_sub(
         return mtpl_buffer_extract(0, allocators, input, out);
     }
 
-    size_t level = 1;
-    while (level && input->data[input->cursor]) {
+    size_t level = 0;
+    do {
         switch (input->data[input->cursor]) {
         case '[':
             level++;
@@ -163,7 +163,7 @@ copy_char:
             out->data[out->cursor++] = input->data[input->cursor++];
             break;
         }
-    }
+    } while (level && input->data[input->cursor]);
 
     return level > 1 ? MTPL_ERR_SYNTAX : MTPL_SUCCESS;
 }

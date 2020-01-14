@@ -237,25 +237,49 @@ mtpl_result mtpl_generator_if(
     mtpl_hashtable* properties,
     mtpl_buffer* out
 ) {
+    mtpl_result res;
     if (arg->data[0] != '#' || !is_whitespace(arg->data[2])) {
         return MTPL_ERR_SYNTAX;
     }
 
+    mtpl_buffer* expr;
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &expr);
+    if (res != MTPL_SUCCESS) {
+        return res;
+    }
+    arg->cursor = 3;
+    res = mtpl_buffer_extract_sub(allocators, arg, expr);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup;
+    }
+
     switch (arg->data[1]) {
     case 't':
-        arg->cursor = 3;
-        return mtpl_substitute(
-            &arg->data[arg->cursor],
-            allocators,
-            generators,
-            properties,
-            out
-        );
+        break;
     case 'f':
-        return MTPL_SUCCESS;
+        expr->cursor = 0;
+        res = mtpl_buffer_extract_sub(allocators, arg, expr);
+        if (res != MTPL_SUCCESS) {
+            res = MTPL_SUCCESS;
+            goto cleanup;
+        }
+        break;
     default:
-        return MTPL_ERR_SYNTAX;
+        res = MTPL_ERR_SYNTAX;
+        goto cleanup;
     }
+    res = mtpl_substitute(
+        expr->data,
+        allocators,
+        generators,
+        properties,
+        out
+    );
+
+cleanup:
+    mtpl_buffer_free(allocators, expr);
+
+    return res;
 }
 
 mtpl_result mtpl_generator_not(

@@ -179,6 +179,21 @@ void test_generator_if(void** state) {
 
     assert_int_equal(result, MTPL_ERR_UNKNOWN_KEY);
     assert_string_equal("", out);
+    
+    memset(out, 0, 32);
+    buf = (mtpl_buffer) { .data = out, .size = 32 };
+    
+    mtpl_buffer input3 = { "#f [=>foo] [:>it's ok]" }; // Trigger 'else'.
+    result = mtpl_generator_if(
+        &allocs,
+        &input3,
+        generators,
+        properties,
+        &buf
+    );
+
+    assert_int_equal(result, MTPL_SUCCESS);
+    assert_string_equal("it's ok", out);
 }
 
 void test_generator_not(void** state) {
