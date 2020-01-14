@@ -165,18 +165,11 @@ mtpl_result mtpl_generator_for(
     variable->cursor = 0;
 
     mtpl_hashtable* scope = NULL;
+    result = mtpl_htable_create(allocators, &scope);
+    if (result != MTPL_SUCCESS) {
+        goto cleanup_list;
+    }
     while (list->data[list->cursor]) {
-        if (!scope) {
-            result = mtpl_htable_create(allocators, &scope);
-            if (result != MTPL_SUCCESS) {
-                break;
-            }
-        } else {
-            // FIXME: Keep scope between iterations.
-            static const size_t s = sizeof(mtpl_hashentry) * MTPL_HTABLE_SIZE;
-            memset(scope->entries, 0, s);
-            scope->count = 0;
-        }
         result = mtpl_buffer_extract(';', allocators, list, item);
         if (result != MTPL_SUCCESS) {
             break;
