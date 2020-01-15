@@ -14,6 +14,10 @@ static mtpl_result add_default_generators(
     mtpl_generator copy = mtpl_generator_copy;
     mtpl_generator replace = mtpl_generator_replace;
     mtpl_generator has_prop = mtpl_generator_has_prop;
+    mtpl_generator escape = mtpl_generator_escape;
+    mtpl_generator let = mtpl_generator_let;
+    mtpl_generator macro = mtpl_generator_macro;
+    mtpl_generator expand = mtpl_generator_expand;
     mtpl_generator genfor = mtpl_generator_for;
     mtpl_generator genif = mtpl_generator_if;
     mtpl_generator not = mtpl_generator_not;
@@ -55,6 +59,46 @@ static mtpl_result add_default_generators(
     result = mtpl_htable_insert(
         "has_prop",
         &has_prop,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "\\",
+        &escape,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "let",
+        &let,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "macro",
+        &macro,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    if (result != MTPL_SUCCESS) {
+        return result;
+    }
+    result = mtpl_htable_insert(
+        "**",
+        &expand,
         sizeof(mtpl_generator),
         allocators,
         generators

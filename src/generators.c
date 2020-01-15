@@ -62,67 +62,64 @@ mtpl_result mtpl_generator_has_prop(
     
     return MTPL_SUCCESS;
 }
-static mtpl_result extract_evaluate(
-    const mtpl_allocators* allocators,
-    mtpl_buffer* in,
-    mtpl_buffer* tmp,
-    mtpl_hashtable* generators,
-    mtpl_hashtable* properties,
-    mtpl_buffer* out
-) {
-    mtpl_result result = mtpl_buffer_extract_sub(allocators, in, tmp);
-    if (result != MTPL_SUCCESS) {
-        return result;
-    }
-    return mtpl_substitute(tmp->data, allocators, generators, properties, out);
-}
 
-mtpl_result mtpl_generator_let(
+mtpl_result mtpl_generator_escape(
     const mtpl_allocators* allocators,
     mtpl_buffer* arg,
     mtpl_hashtable* generators,
     mtpl_hashtable* properties,
     mtpl_buffer* out
 ) {
-    mtpl_buffer* sub;
+    do { 
+        if (out->cursor >= out->size - 1) {
+            MTPL_REALLOC_CHECKED(
+                allocators,
+                out->data,
+                out->size * 2, 
+                return MTPL_ERR_MEMORY;
+            );
+            out->size *= 2;
+        }
+        switch (arg->data[arg->cursor]) {
+        case ' ':
+            out->data[out->cursor++] = '\\';
+            // Fallthrough.
+        default:
+            out->data[out->cursor++] = arg->data[arg->cursor++];
+            break;
+        }
+    } while (arg->data[arg->cursor]);
+
+    return MTPL_SUCCESS;
+}
+
+static mtpl_result let_prop(
+    const mtpl_allocators* allocators,
+    mtpl_generator impl,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    mtpl_result result;
     mtpl_buffer* variable;
     mtpl_buffer* value;
-
-    mtpl_result result = mtpl_buffer_create(
-        allocators,
-        MTPL_DEFAULT_BUFSIZE,
-        &sub
-    );
-    if (result != MTPL_SUCCESS) {
-        return result;
-    }
+    
     result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &variable);
     if (result != MTPL_SUCCESS) {
-        goto cleanup_sub;
+        return result;
     }
     result = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &value);
     if (result != MTPL_SUCCESS) {
         goto cleanup_variable;
     }
 
-    result = extract_evaluate(
-        allocators,
-        arg,
-        sub,
-        generators,
-        properties,
-        variable
-    );
+    result = mtpl_buffer_extract(0, allocators, arg, variable);
     if (result != MTPL_SUCCESS) {
         goto cleanup_value;
     }
-    result = mtpl_substitute(
-        &arg->data[arg->cursor],
-        allocators,
-        generators,
-        properties,
-        value
-    );
+    result = impl(allocators, arg, generators, properties, value);
+        
     if (result != MTPL_SUCCESS) {
         goto cleanup_value;
     }
@@ -139,10 +136,136 @@ cleanup_value:
     mtpl_buffer_free(allocators, value);
 cleanup_variable:
     mtpl_buffer_free(allocators, variable);
-cleanup_sub:
-    mtpl_buffer_free(allocators, sub);
 
     return result;
+}
+
+static mtpl_result do_subst(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return mtpl_substitute(
+        &arg->data[arg->cursor],
+        allocators,
+        generators,
+        properties,
+        out
+    );
+}
+
+mtpl_result mtpl_generator_let(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return let_prop(allocators, do_subst, arg, generators, properties, out);
+}
+
+mtpl_result mtpl_generator_macro(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return let_prop(
+        allocators,
+        mtpl_generator_copy,
+        arg,
+        generators,
+        properties,
+        out
+    );
+}
+
+mtpl_result mtpl_generator_expand(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    mtpl_result res;
+    mtpl_buffer* arglist;
+    mtpl_buffer* body;
+    mtpl_buffer* param;
+    mtpl_buffer* value;
+    
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &arglist);
+    if (res!= MTPL_SUCCESS) {
+        return res;
+    }
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &body);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_arglist;
+    }
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &param);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_body;
+    }
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &value);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_param;
+    }
+
+    res = mtpl_buffer_extract(0, allocators, arg, arglist);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_value;
+    }
+    res = mtpl_buffer_extract(0, allocators, arg, body);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_value;
+    }
+    
+    mtpl_hashtable* scope = NULL;
+    res = mtpl_htable_create(allocators, &scope);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_value;
+    }
+    scope->next = properties;
+    while (arglist->data[arglist->cursor]) {
+        res = mtpl_buffer_extract(';', allocators, arglist, param);
+        if (res != MTPL_SUCCESS) {
+            goto cleanup_scope;
+        }
+        res = mtpl_buffer_extract(0, allocators, arg, value);
+        if (res != MTPL_SUCCESS) {
+            goto cleanup_scope;
+        }
+        size_t len = strlen(value->data) + 1;
+        res = mtpl_htable_insert(
+           param->data,
+           value->data,
+           len,
+           allocators,
+           scope
+        );
+        param->cursor = 0;
+        value->cursor = 0;
+        if (res != MTPL_SUCCESS) {
+            goto cleanup_scope;
+        }
+    }
+
+    res = mtpl_substitute(body->data, allocators, generators, scope, out);
+
+cleanup_scope:
+    mtpl_htable_free(allocators, scope);
+cleanup_value:
+    mtpl_buffer_free(allocators, value);
+cleanup_param:
+    mtpl_buffer_free(allocators, param);
+cleanup_body:
+    mtpl_buffer_free(allocators, body);
+cleanup_arglist:
+    mtpl_buffer_free(allocators, arglist);
+
+    return res;
 }
 
 mtpl_result mtpl_generator_for(
@@ -188,6 +311,7 @@ mtpl_result mtpl_generator_for(
     if (result != MTPL_SUCCESS) {
         goto cleanup_list;
     }
+    scope->next = properties;
     while (list->data[list->cursor]) {
         result = mtpl_buffer_extract(';', allocators, list, item);
         if (result != MTPL_SUCCESS) {
@@ -206,7 +330,6 @@ mtpl_result mtpl_generator_for(
             break;
         }
 
-        scope->next = properties;
         result = mtpl_substitute(
             &arg->data[arg->cursor],
             allocators,
@@ -214,11 +337,11 @@ mtpl_result mtpl_generator_for(
             scope,
             out
         );
-        scope->next = NULL;
         if (result != MTPL_SUCCESS) {
             break;
         }
     }
+    scope->next = NULL;
 
     mtpl_htable_free(allocators, scope);
 cleanup_list:
@@ -248,7 +371,7 @@ mtpl_result mtpl_generator_if(
         return res;
     }
     arg->cursor = 3;
-    res = mtpl_buffer_extract_sub(allocators, arg, expr);
+    res = mtpl_buffer_extract_sub(allocators, true, arg, expr);
     if (res != MTPL_SUCCESS) {
         goto cleanup;
     }
@@ -258,7 +381,7 @@ mtpl_result mtpl_generator_if(
         break;
     case 'f':
         expr->cursor = 0;
-        res = mtpl_buffer_extract_sub(allocators, arg, expr);
+        res = mtpl_buffer_extract_sub(allocators, true, arg, expr);
         if (res != MTPL_SUCCESS) {
             res = MTPL_SUCCESS;
             goto cleanup;
@@ -345,7 +468,7 @@ static mtpl_result generator_cmp(
         goto cleanup_sub_gen_0;
     }
     
-    result = mtpl_buffer_extract_sub(allocators, arg, sub);
+    result = mtpl_buffer_extract_sub(allocators, true, arg, sub);
     if (result != MTPL_SUCCESS) {
         goto cleanup_sub_gen_1;
     }
@@ -361,7 +484,7 @@ static mtpl_result generator_cmp(
     }
     sub_gen[0]->data[sub_gen[0]->cursor] = '\0';
     sub->cursor = 0;
-    result = mtpl_buffer_extract_sub(allocators, arg, sub);
+    result = mtpl_buffer_extract_sub(allocators, true, arg, sub);
     if (result != MTPL_SUCCESS) {
         goto cleanup_sub_gen_1;
     }

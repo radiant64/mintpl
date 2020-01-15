@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mintpl/common.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef _cplusplus
@@ -45,6 +46,7 @@ mtpl_result mtpl_buffer_extract(
 
 mtpl_result mtpl_buffer_extract_sub(
     const mtpl_allocators* allocators,
+    const bool include_outer,
     mtpl_buffer* input,
     mtpl_buffer* out
 );

@@ -61,16 +61,16 @@ static mtpl_result perform_substitution(
             }
             break;
         case '{':
-            source->cursor++;
-            result = mtpl_buffer_extract(
-                '}',
+            result = mtpl_buffer_extract_sub(
                 allocators,
+                false,
                 (mtpl_buffer*) source,
                 arg_buffer
             );
             if (result != MTPL_SUCCESS) {
                 goto cleanup_arg_buffer;
             }
+
             break;
         case ']':
             source->cursor++;

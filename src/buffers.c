@@ -36,7 +36,7 @@ static size_t extract_length(
         ++i;
     }
 
-    return ++i;
+    return i;
 }
 
 mtpl_result mtpl_buffer_create(
@@ -110,60 +110,63 @@ mtpl_result mtpl_buffer_extract(
         );
         out->size = size;
     }
-    memcpy(&out->data[out->cursor], &input->data[input->cursor], len - 1);
-    out->data[out->cursor + len - 1] = '\0';
-    out->cursor += len - 1;
-    input->cursor += len;
+    for (size_t i = 0; i < len; ++i) {
+        const char c = input->data[input->cursor++];
+        if (c != '\\') {
+            out->data[out->cursor++] = c;
+        }
+    }
+    input->cursor++;
+    out->data[out->cursor] = '\0';
     trim_whitespace(input);
     return MTPL_SUCCESS;
 }
 
 mtpl_result mtpl_buffer_extract_sub(
     const mtpl_allocators* allocators,
+    const bool include_outer,
     mtpl_buffer* input,
     mtpl_buffer* out
 ) {
     trim_whitespace(input);
     const char opener = input->data[input->cursor];
-    if (opener == '{') {
-        mtpl_result result = mtpl_buffer_extract('}', allocators, input, out);
-        out->data[out->cursor++] = '}';
-        out->data[out->cursor] = '\0';
-        return result;
-    } else if (opener != '[') {
+    if (opener != '[' && opener != '{') {
         return mtpl_buffer_extract(0, allocators, input, out);
     }
+    const char closer = opener == '[' ? ']' : '}';
 
     size_t level = 0;
     do {
-        switch (input->data[input->cursor]) {
-        case '[':
+        const char c = input->data[input->cursor];
+        if (c == opener) {
             level++;
-            goto copy_char;
-        case ']':
+            if (!include_outer && level == 1) {
+                input->cursor++;
+                continue;
+            }
+        } else if (c == closer) {
             level--;
-            goto copy_char;
-        case '\\':
+        } else if (c == '\\') {
             // Escape next character if not 0.
             if (!input->data[++(input->cursor)]) {
                 return MTPL_ERR_SYNTAX;
             }
-            // Fall through.
-        default:
-copy_char:
-            if (out->cursor >= out->size) {
-                MTPL_REALLOC_CHECKED(
-                    allocators,
-                    out->data,
-                    out->size * 2,
-                    return MTPL_ERR_MEMORY
-                );
-                out->size *= 2;
-            }
+        }
+        if (out->cursor >= out->size) {
+            MTPL_REALLOC_CHECKED(
+                allocators,
+                out->data,
+                out->size * 2,
+                return MTPL_ERR_MEMORY
+            );
+            out->size *= 2;
+        }
+        if (include_outer || level > 0) {
             out->data[out->cursor++] = input->data[input->cursor++];
-            break;
         }
     } while (level && input->data[input->cursor]);
+
+    out->data[out->cursor] = '\0';
 
     return level > 1 ? MTPL_ERR_SYNTAX : MTPL_SUCCESS;
 }

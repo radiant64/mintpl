@@ -83,7 +83,7 @@ void test_generator_let(void** state) {
     mtpl_hashtable* properties;
     mtpl_htable_create(&allocs, &properties);
     
-    mtpl_buffer in = { "{my test} foo bar" };
+    mtpl_buffer in = { "my\\ test foo bar" };
     mtpl_result res = mtpl_generator_let(&allocs, &in, NULL, properties, NULL);
     assert_int_equal(res, MTPL_SUCCESS);
 
