@@ -51,8 +51,9 @@ Have a look at this small, silly, example.
   - `has_prop`  
     Returns `#t` if the property named by the argument string exists, or `#f` if
     it doesn't.
-  - `escape`  
-    Outputs its string argument with all spaces escaped by backslash.
+  - `\\`  
+    Escape generator. Outputs its string argument with all spaces escaped by
+    backslash.
   - `macro`  
     Syntax: `[macro>NAME PARAMLIST BODY]`  
     Defines a parameterized macro identified by `NAME`. `PARAMLIST` is a
