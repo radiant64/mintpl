@@ -71,7 +71,7 @@ mtpl_result mtpl_buffer_print(
     const mtpl_allocators* allocators,
     mtpl_buffer* output
 ) {
-    size_t len = strlen(input->data);
+    size_t len = strlen(&input->data[input->cursor]);
     if (output->cursor + len >= output->size) {
         MTPL_REALLOC_CHECKED(
             allocators,
@@ -82,7 +82,7 @@ mtpl_result mtpl_buffer_print(
         output->size *= 2;
     }
 
-    memcpy(&output->data[output->cursor], input->data, len);
+    memcpy(&output->data[output->cursor], &input->data[input->cursor], len);
     output->cursor += len;
     output->data[output->cursor] = '\0';
     return MTPL_SUCCESS;

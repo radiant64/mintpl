@@ -101,6 +101,28 @@ void test_generator_let(void** state) {
     assert_string_equal(found, "foo bar");
 }
 
+void test_generator_macro_expand(void** state) {
+    mtpl_hashtable* props;
+    mtpl_htable_create(&allocs, &props);
+    
+    mtpl_hashtable* gens;
+    mtpl_htable_create(&allocs, &gens);
+    mtpl_generator replace = mtpl_generator_replace;
+    mtpl_htable_insert("=", &replace, sizeof(mtpl_generator), &allocs, gens);
+    
+    mtpl_result res;
+    mtpl_buffer in1 = { "operation foo;bar [=>foo][=>bar]" };
+    res = mtpl_generator_macro(&allocs, &in1, gens, props, NULL);
+    assert_int_equal(res, MTPL_SUCCESS);
+
+    char out[32] = { 0 };
+    mtpl_buffer buf = { .data = out, .size = 32 };
+    mtpl_buffer in2 = { "operation 123 456" };
+    res = mtpl_generator_expand(&allocs, &in2, gens, props, &buf);
+    assert_int_equal(res, MTPL_SUCCESS);
+    assert_string_equal(out, "123456");
+}
+
 void test_generator_for(void** state) {
     char out[32] = { 0 };
     mtpl_buffer buf = { .data = out, .size = 32 };
@@ -320,6 +342,7 @@ const struct CMUnitTest generators_tests[] = {
     cmocka_unit_test(test_generator_has_prop),
     cmocka_unit_test(test_generator_escape),
     cmocka_unit_test(test_generator_let),
+    cmocka_unit_test(test_generator_macro_expand),
     cmocka_unit_test(test_generator_for),
     cmocka_unit_test(test_generator_if),
     cmocka_unit_test(test_generator_not),

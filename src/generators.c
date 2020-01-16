@@ -191,14 +191,19 @@ mtpl_result mtpl_generator_expand(
     mtpl_buffer* out
 ) {
     mtpl_result res;
+    mtpl_buffer* name;
     mtpl_buffer* arglist;
     mtpl_buffer* body;
     mtpl_buffer* param;
     mtpl_buffer* value;
     
-    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &arglist);
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &name);
     if (res!= MTPL_SUCCESS) {
         return res;
+    }
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &arglist);
+    if (res!= MTPL_SUCCESS) {
+        goto cleanup_name;
     }
     res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &body);
     if (res != MTPL_SUCCESS) {
@@ -213,11 +218,16 @@ mtpl_result mtpl_generator_expand(
         goto cleanup_param;
     }
 
-    res = mtpl_buffer_extract(0, allocators, arg, arglist);
+    res = mtpl_buffer_extract(0, allocators, arg, name);
     if (res != MTPL_SUCCESS) {
         goto cleanup_value;
     }
-    res = mtpl_buffer_extract(0, allocators, arg, body);
+    mtpl_buffer def = { mtpl_htable_search(name->data, properties) };
+    if (!def.data) {
+        goto cleanup_value;
+    }
+
+    res = mtpl_buffer_extract(0, allocators, &def, arglist);
     if (res != MTPL_SUCCESS) {
         goto cleanup_value;
     }
@@ -228,6 +238,7 @@ mtpl_result mtpl_generator_expand(
         goto cleanup_value;
     }
     scope->next = properties;
+    arglist->cursor = 0;
     while (arglist->data[arglist->cursor]) {
         res = mtpl_buffer_extract(';', allocators, arglist, param);
         if (res != MTPL_SUCCESS) {
@@ -252,7 +263,13 @@ mtpl_result mtpl_generator_expand(
         }
     }
 
-    res = mtpl_substitute(body->data, allocators, generators, scope, out);
+    res = mtpl_substitute(
+        &def.data[def.cursor],
+        allocators,
+        generators,
+        scope,
+        out
+    );
 
 cleanup_scope:
     mtpl_htable_free(allocators, scope);
@@ -264,6 +281,8 @@ cleanup_body:
     mtpl_buffer_free(allocators, body);
 cleanup_arglist:
     mtpl_buffer_free(allocators, arglist);
+cleanup_name:
+    mtpl_buffer_free(allocators, name);
 
     return res;
 }
