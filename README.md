@@ -22,8 +22,7 @@ Have a look at this small, silly, example.
 - Everything is a string.
 - Depth-first evaluation.
 - Variables are available as key-value properties.
-- Dynamically scoped variable lookup through linked hashtables. (Currently
-  used by the `for` generator.)
+- Dynamically scoped variable lookup through linked hashtables. 
 - Not built for speed or continuous operation -- this is a "batch job" language.
 - Small -- at the time of writing a static release build of the entire library
   is well below 32 KiB.
@@ -49,6 +48,22 @@ Have a look at this small, silly, example.
   - `!`  
     Nop generator. Does nothing with its argument string. Can be used for
     comments.
+  - `has_prop`  
+    Returns `#t` if the property named by the argument string exists, or `#f` if
+    it doesn't.
+  - `escape`  
+    Outputs its string argument with all spaces escaped by backslash.
+  - `macro`  
+    Syntax: `[macro>NAME PARAMLIST BODY]`  
+    Defines a parameterized macro identified by `NAME`. `PARAMLIST` is a
+    semicolon separated list of property names that will be substituted with
+    arguments provided when expanding the macro, and `BODY` is the contents on
+    which the substitutions will operate.
+  - `**`  
+    Syntax: `[**>NAME ARGS]`  
+    Expands the macro `NAME`, substituting each parameter in its parameter list
+    with subsequent words from ARGS. Whitespace in arguments needs to be
+    escaped.
   - `let`  
     Syntax: `[let>VARIABLE VALUE]`  
     Evaluates VARIABLE as a substitution, then sets the property named by the
