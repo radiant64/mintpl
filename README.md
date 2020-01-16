@@ -75,9 +75,10 @@ Have a look at this small, silly, example.
     will be set to the current list item, and can be accessed from within
     `SUBSTITUTION` if the latter is quoted.
   - `if`  
-    Syntax: `[if>BOOLEAN SUBSTITUTION]`  
-    Evaluates `SUBSTITUTION` if `BOOLEAN` is the string `#t`, skips it if the
-    string value is `#f`, and throws a syntax error for any other value.
+    Syntax: `[if>BOOLEAN T_SUBSTITUTION F_SUBSTITUTION]`  
+    Evaluates `T_SUBSTITUTION` if `BOOLEAN` is the string `#t`, or
+    `F_SUBSTITUTION` if it is `#f`. Any other value of `BOOLEAN` will result in
+    a syntax error.
   - `not`  
     Evaluates its boolean argument, turning `#t` to `#f` and vice versa, and
     throwing syntax error on any other values.
