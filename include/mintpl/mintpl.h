@@ -6,7 +6,7 @@
 #include <mintpl/hashtable.h>
 #include <mintpl/version.h>
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -40,7 +40,7 @@ mtpl_result mtpl_set_property(
 
 mtpl_result mtpl_parse_template(const char* source, mtpl_context* context);
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 

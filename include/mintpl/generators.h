@@ -4,7 +4,7 @@
 #include <mintpl/common.h>
 #include <mintpl/hashtable.h>
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -144,7 +144,7 @@ mtpl_result mtpl_generator_lteq(
     mtpl_buffer* out
 );
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 

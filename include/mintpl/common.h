@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -33,7 +33,7 @@ typedef struct {
     void (*free)(void*);
 } mtpl_allocators;
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 

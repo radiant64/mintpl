@@ -116,7 +116,9 @@ mtpl_result mtpl_buffer_extract(
             out->data[out->cursor++] = c;
         }
     }
-    input->cursor++;
+    if (input->data[input->cursor]) {
+        input->cursor++;
+    }
     out->data[out->cursor] = '\0';
     trim_whitespace(input);
     return MTPL_SUCCESS;

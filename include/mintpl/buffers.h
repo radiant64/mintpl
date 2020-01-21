@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -51,7 +51,7 @@ mtpl_result mtpl_buffer_extract_sub(
     mtpl_buffer* out
 );
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 

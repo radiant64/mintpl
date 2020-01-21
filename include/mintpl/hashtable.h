@@ -3,7 +3,7 @@
 #include <mintpl/common.h>
 #include <stdint.h>
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -47,7 +47,7 @@ mtpl_result mtpl_htable_delete(
     mtpl_hashtable* htable
 );
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 
