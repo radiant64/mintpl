@@ -336,6 +336,51 @@ void test_generator_compare(void** state) {
     assert_string_equal("#t", out);
 }
 
+void test_generator_startsw(void** state) {
+    char out[32] = { 0 };
+    mtpl_buffer buf = { .data = out, .size = 32 };
+    mtpl_buffer in1 = { "foo foo bar" };
+    mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
+    assert_int_equal(res, MTPL_SUCCESS);
+    assert_string_equal(out, "#t");
+    
+    buf.cursor = 0;
+    mtpl_buffer in2 = { "bar foo bar" };
+    res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
+    assert_int_equal(res, MTPL_SUCCESS);
+    assert_string_equal(out, "#f");
+}
+
+void test_generator_endsw(void** state) {
+    char out[32] = { 0 };
+    mtpl_buffer buf = { .data = out, .size = 32 };
+    mtpl_buffer in1 = { "foo foo bar" };
+    mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
+    assert_int_equal(res, MTPL_SUCCESS);
+    assert_string_equal(out, "#t");
+    
+    buf.cursor = 0;
+    mtpl_buffer in2 = { "bar foo bar" };
+    res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
+    assert_int_equal(res, MTPL_SUCCESS);
+    assert_string_equal(out, "#f");
+}
+
+void test_generator_contains(void** state) {
+    char out[32] = { 0 };
+    mtpl_buffer buf = { .data = out, .size = 32 };
+    mtpl_buffer in1 = { "foo foo bar" };
+    mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
+    assert_int_equal(res, MTPL_SUCCESS);
+    assert_string_equal(out, "#t");
+    
+    buf.cursor = 0;
+    mtpl_buffer in2 = { "bar foo bar" };
+    res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
+    assert_int_equal(res, MTPL_SUCCESS);
+    assert_string_equal(out, "#f");
+}
+
 const struct CMUnitTest generators_tests[] = {
     cmocka_unit_test(test_generator_copy),
     cmocka_unit_test(test_generator_replace),
@@ -346,7 +391,10 @@ const struct CMUnitTest generators_tests[] = {
     cmocka_unit_test(test_generator_for),
     cmocka_unit_test(test_generator_if),
     cmocka_unit_test(test_generator_not),
-    cmocka_unit_test(test_generator_compare)
+    cmocka_unit_test(test_generator_compare),
+    cmocka_unit_test(test_generator_startsw),
+    cmocka_unit_test(test_generator_endsw),
+    cmocka_unit_test(test_generator_contains)
 };
 
 int main(void) {

@@ -601,3 +601,85 @@ mtpl_result mtpl_generator_lteq(
     return generator_cmp(allocators, lteq, arg, generators, properties, out); 
 }
 
+static mtpl_result gen_strcmp(
+    const mtpl_allocators* allocators,
+    bool(*compare)(const mtpl_buffer* a, const char* b),
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    mtpl_result res;
+    mtpl_buffer* comparand;
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &comparand);
+    if (res != MTPL_SUCCESS) {
+        return res;
+    }
+    res = mtpl_buffer_extract(0, allocators, arg, comparand);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup;
+    }
+
+    out->data[out->cursor] = '#';
+    out->data[out->cursor + 2] = '\0';
+    const char* test = &(arg->data[arg->cursor]);
+    if (compare(comparand, test)) {
+        out->data[out->cursor + 1] = 't';
+    } else {
+        out->data[out->cursor + 1] = 'f';
+    }
+    out->cursor += 2;
+
+cleanup:
+    mtpl_buffer_free(allocators, comparand);
+
+    return res;
+}
+
+static bool startsw(const mtpl_buffer* a, const char* b) {
+    return strncmp(a->data, b, strlen(a->data)) == 0;
+}
+
+static bool endsw(const mtpl_buffer* a, const char* b) {
+    const size_t alen = strlen(a->data);
+    const size_t blen = strlen(b);
+    if (blen < alen) {
+        return false;
+    }
+    return strncmp(a->data, &(b[blen - alen]), alen) == 0;
+}
+
+static bool contains(const mtpl_buffer* a, const char* b) {
+    return strstr(b, a->data) != NULL;
+}
+
+mtpl_result mtpl_generator_startsw(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return gen_strcmp(allocators, startsw, arg, generators, properties, out);
+}
+
+mtpl_result mtpl_generator_endsw(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return gen_strcmp(allocators, endsw, arg, generators, properties, out);
+}
+
+mtpl_result mtpl_generator_contains(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    return gen_strcmp(allocators, contains, arg, generators, properties, out);
+}
+

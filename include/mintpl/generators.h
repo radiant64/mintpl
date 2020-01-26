@@ -144,6 +144,30 @@ mtpl_result mtpl_generator_lteq(
     mtpl_buffer* out
 );
 
+mtpl_result mtpl_generator_startsw(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
+mtpl_result mtpl_generator_endsw(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
+mtpl_result mtpl_generator_contains(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
 #ifdef __cplusplus
 }
 #endif
