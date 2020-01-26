@@ -70,6 +70,9 @@ static mtpl_result perform_substitution(
             if (result != MTPL_SUCCESS) {
                 goto cleanup_arg_buffer;
             }
+            if (source->data[source->cursor]) {
+                source->cursor++;
+            }
 
             break;
         case ']':
