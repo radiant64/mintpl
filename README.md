@@ -2,7 +2,7 @@
 **Min**imal **T**emplate **P**rogramming **L**anguage
 
 ## Description
-A minimalistic language for automatic text processing, implemented as a C (18)
+A minimalistic language for automatic text processing, implemented as a C (17)
 library for embedding. It is made specifically to be extended by the embedding
 application. As a language it bears some similarities to Tcl.
 
