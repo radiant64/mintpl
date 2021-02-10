@@ -1,403 +1,304 @@
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include <setjmp.h>
-
-#include <cmocka.h>
+#include "testdrive.h"
 
 #include <mintpl/generators.h>
 
+#include <string.h>
+
 static const mtpl_allocators allocs = { malloc, realloc, free };
 
-void test_generator_copy(void** state) {
+FIXTURE(generators, "Generators")
     char out[32] = { 0 };
     mtpl_buffer buf = { .data = out, .size = 32 };
-    mtpl_buffer input = { "foo" };
 
-    mtpl_result result = mtpl_generator_copy(&allocs, &input, NULL, NULL, &buf);
-
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("foo", out);
-}
-
-void test_generator_replace(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
-    mtpl_buffer input = { "foo" };
-
-    mtpl_hashtable* properties;
-    mtpl_htable_create(&allocs, &properties);
-    assert_non_null(properties);
-
-    mtpl_htable_insert("foo", "bar", 4, &allocs, properties);
-    mtpl_result result = mtpl_generator_replace(
-        &allocs,
-        &input,
-        NULL,
-        properties,
-        &buf
-    );
-
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("bar", out);
-}
-
-void test_generator_has_prop(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
-    mtpl_buffer input1 = { "foo" };
-
-    mtpl_hashtable* properties;
-    mtpl_htable_create(&allocs, &properties);
-    assert_non_null(properties);
-
-    mtpl_htable_insert("foo", "bar", 4, &allocs, properties);
-    
-    mtpl_result result = mtpl_generator_has_prop(
-        &allocs,
-        &input1,
-        NULL,
-        properties,
-        &buf
-    );
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-    
-    mtpl_buffer input2 = { "bar" };
-    buf.cursor = 0;
-    result = mtpl_generator_has_prop(
-        &allocs,
-        &input2,
-        NULL,
-        properties,
-        &buf
-    );
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#f", out);
-}
-
-void test_generator_escape(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
-    mtpl_buffer in = { "foo bar" };
-    mtpl_result res = mtpl_generator_escape(&allocs, &in, NULL, NULL, &buf);
-    assert_int_equal(res, MTPL_SUCCESS);
-    assert_string_equal(out, "foo\\ bar");
-}
-
-void test_generator_let(void** state) {
-    mtpl_hashtable* properties;
-    mtpl_htable_create(&allocs, &properties);
-    
-    mtpl_buffer in = { "my\\ test foo bar" };
-    mtpl_result res = mtpl_generator_let(&allocs, &in, NULL, properties, NULL);
-    assert_int_equal(res, MTPL_SUCCESS);
-
-    const char* found = mtpl_htable_search("my test", properties);
-    assert_non_null(found);
-    assert_string_equal(found, "foo bar");
-}
-
-void test_generator_macro_expand(void** state) {
     mtpl_hashtable* props;
     mtpl_htable_create(&allocs, &props);
-    
+    REQUIRE(props);
+        
     mtpl_hashtable* gens;
     mtpl_htable_create(&allocs, &gens);
+    REQUIRE(gens);
+
+    mtpl_generator copy = mtpl_generator_copy;
     mtpl_generator replace = mtpl_generator_replace;
     mtpl_htable_insert("=", &replace, sizeof(mtpl_generator), &allocs, gens);
-    
+    mtpl_htable_insert(":", &copy, sizeof(mtpl_generator), &allocs, gens);
+        
     mtpl_result res;
-    mtpl_buffer in1 = { "operation foo;bar [=>foo][=>bar]" };
-    res = mtpl_generator_macro(&allocs, &in1, gens, props, NULL);
-    assert_int_equal(res, MTPL_SUCCESS);
 
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
-    mtpl_buffer in2 = { "operation 123 456" };
-    res = mtpl_generator_expand(&allocs, &in2, gens, props, &buf);
-    assert_int_equal(res, MTPL_SUCCESS);
-    assert_string_equal(out, "123456");
-}
+    SECTION("copy")
+        mtpl_buffer input = { "foo" };
 
-void test_generator_for(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
+        res = mtpl_generator_copy(&allocs, &input, NULL, NULL, &buf);
 
-    mtpl_hashtable* generators;
-    mtpl_hashtable* properties;
-    mtpl_htable_create(&allocs, &generators);
-    mtpl_htable_create(&allocs, &properties);
-    mtpl_generator copy = mtpl_generator_copy;
-    mtpl_generator replace = mtpl_generator_replace;
-    mtpl_htable_insert(":", &copy, sizeof(mtpl_generator), &allocs, generators);
-    mtpl_htable_insert(
-        "=",
-        &replace,
-        sizeof(mtpl_generator),
-        &allocs,
-        generators
-    );
-    mtpl_htable_insert("test", "ok", 3, &allocs, properties);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp("foo", out) == 0);
+    END_SECTION
 
-    mtpl_buffer input1 = { "1;2;3;4 meta [:>[=>meta]! [=>test] ]" };
-    mtpl_result result = mtpl_generator_for(
-        &allocs,
-        &input1,
-        generators,
-        properties,
-        &buf
-    );
+    SECTION("replace")
+        mtpl_buffer input = { "foo" };
 
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("1! ok 2! ok 3! ok 4! ok ", out);
-    
-    memset(out, 0, 32);
-    buf = (mtpl_buffer) { .data = out, .size = 32 };
-    mtpl_htable_insert("foo", "baz ", 5, &allocs, properties);
-    mtpl_htable_insert("bar", "qux", 4, &allocs, properties);
-    
-    mtpl_buffer input2 = { "foo;bar meta [=>[=>meta]]" };
-    result = mtpl_generator_for(
-        &allocs,
-        &input2,
-        generators,
-        properties,
-        &buf
-    );
+        mtpl_htable_insert("foo", "bar", 4, &allocs, props);
+        res = mtpl_generator_replace(&allocs, &input, NULL, props, &buf);
 
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("baz qux", out);
-}
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp("bar", out) == 0);
+    END_SECTION
 
-void test_generator_if(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
+    SECTION("has_prop")
+        SECTION("Property exists")
+            mtpl_buffer input = { "foo" };
+            mtpl_htable_insert("foo", "bar", 4, &allocs, props);
 
-    mtpl_hashtable* generators;
-    mtpl_hashtable* properties;
-    mtpl_htable_create(&allocs, &generators);
-    mtpl_htable_create(&allocs, &properties);
-    mtpl_generator copy = mtpl_generator_copy;
-    mtpl_htable_insert(":", &copy, sizeof(mtpl_generator), &allocs, generators);
+            res = mtpl_generator_has_prop(&allocs, &input, NULL, props, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp("#t", out) == 0);
+        END_SECTION
 
-    mtpl_buffer input1 = { "#f [=>foo]" }; // Would cause error if evaluated.
-    mtpl_result result = mtpl_generator_if(
-        &allocs,
-        &input1,
-        generators,
-        properties,
-        &buf
-    );
+        SECTION("Property doesn't exist")
+            mtpl_buffer input = { "bar" };
 
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("", out);
-    
-    memset(out, 0, 32);
-    buf = (mtpl_buffer) { .data = out, .size = 32 };
-    
-    mtpl_buffer input2 = { "#t [=>foo]" }; // Expect an error.
-    result = mtpl_generator_if(
-        &allocs,
-        &input2,
-        generators,
-        properties,
-        &buf
-    );
+            res = mtpl_generator_has_prop(&allocs, &input, NULL, props, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp("#f", out) == 0);
+        END_SECTION
+    END_SECTION
 
-    assert_int_equal(result, MTPL_ERR_UNKNOWN_KEY);
-    assert_string_equal("", out);
-    
-    memset(out, 0, 32);
-    buf = (mtpl_buffer) { .data = out, .size = 32 };
-    
-    mtpl_buffer input3 = { "#f [=>foo] [:>it's ok]" }; // Trigger 'else'.
-    result = mtpl_generator_if(
-        &allocs,
-        &input3,
-        generators,
-        properties,
-        &buf
-    );
+    SECTION("escape")
+        mtpl_buffer in = { "foo bar" };
 
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("it's ok", out);
-}
+        mtpl_result res = mtpl_generator_escape(&allocs, &in, NULL, NULL, &buf);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp(out, "foo\\ bar") == 0);
+    END_SECTION
 
-void test_generator_not(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
+    SECTION("let")
+        mtpl_buffer in = { "my\\ test foo bar" };
+        mtpl_result res = mtpl_generator_let(&allocs, &in, NULL, props, NULL);
+        REQUIRE(res == MTPL_SUCCESS);
 
-    mtpl_buffer i1 = { "#f" };
-    mtpl_result result = mtpl_generator_not(&allocs, &i1, NULL, NULL, &buf);
+        const char* found = mtpl_htable_search("my test", props);
+        REQUIRE(found);
+        REQUIRE(strcmp(found, "foo bar") == 0);
+    END_SECTION
 
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-    
-    buf = (mtpl_buffer) { .data = out, .size = 32 };
-    
-    mtpl_buffer i2 = { "#t" };
-    result = mtpl_generator_not(&allocs, &i2, NULL, NULL, &buf);
+    SECTION("macro")
+        mtpl_buffer in = { "operation foo;bar [=>foo][=>bar]" };
+        res = mtpl_generator_macro(&allocs, &in, gens, props, NULL);
+        REQUIRE(res == MTPL_SUCCESS);
 
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#f", out);
-}
+        SECTION("expand")
+            mtpl_buffer in = { "operation 123 456" };
+            res = mtpl_generator_expand(&allocs, &in, gens, props, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "123456") == 0);
+        END_SECTION
+    END_SECTION
 
-void test_generator_compare(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
+    SECTION("for")
+        SECTION("Simple loop")
+            mtpl_htable_insert("test", "ok", 3, &allocs, props);
 
-    mtpl_hashtable* generators;
-    mtpl_htable_create(&allocs, &generators);
-    mtpl_generator copy = mtpl_generator_copy;
-    mtpl_htable_insert(":", &copy, sizeof(mtpl_generator), &allocs, generators);
+            mtpl_buffer input = { "1;2;3;4 meta [:>[=>meta]! [=>test] ]" };
+            res = mtpl_generator_for(&allocs, &input, gens, props, &buf);
 
-    mtpl_buffer input1 = { "foo [:>foo]" };
-    mtpl_result result = mtpl_generator_equals(
-        &allocs,
-        &input1,
-        generators,
-        NULL,
-        &buf
-    );
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-    
-    memset(out, 0, 32);
-    buf = (mtpl_buffer) { .data = out, .size = 32 };
-    
-    mtpl_buffer input2 = { "foo bar" };
-    result = mtpl_generator_equals(&allocs, &input2, generators, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp("1! ok 2! ok 3! ok 4! ok ", out) == 0);
+        END_SECTION
+        
+        SECTION("Indirect expansion")
+            mtpl_htable_insert("foo", "baz ", 5, &allocs, props);
+            mtpl_htable_insert("bar", "qux", 4, &allocs, props);
+            
+            mtpl_buffer input = { "foo;bar meta [=>[=>meta]]" };
+            res = mtpl_generator_for(&allocs, &input, gens, props, &buf);
 
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#f", out);
-    
-    buf.cursor = 0;
-    mtpl_buffer input3 = { "12 23" };
-    result = mtpl_generator_greater(&allocs, &input3, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#f", out);
-    
-    buf.cursor = 0;
-    mtpl_buffer input4 = { "23 12" };
-    result = mtpl_generator_greater(&allocs, &input4, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-    
-    buf.cursor = 0;
-    input3.cursor = 0;
-    result = mtpl_generator_less(&allocs, &input3, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-    
-    buf.cursor = 0;
-    input4.cursor = 0;
-    result = mtpl_generator_less(&allocs, &input4, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#f", out);
-    
-    buf.cursor = 0;
-    mtpl_buffer input5 = { "22 22" };
-    result = mtpl_generator_gteq(&allocs, &input5, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-    
-    buf.cursor = 0;
-    input4.cursor = 0;
-    result = mtpl_generator_gteq(&allocs, &input4, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-    
-    buf.cursor = 0;
-    input3.cursor = 0;
-    result = mtpl_generator_gteq(&allocs, &input3, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#f", out);
-    
-    buf.cursor = 0;
-    input5.cursor = 0;
-    result = mtpl_generator_lteq(&allocs, &input5, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-    
-    buf.cursor = 0;
-    input4.cursor = 0;
-    result = mtpl_generator_lteq(&allocs, &input4, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#f", out);
-    
-    buf.cursor = 0;
-    input3.cursor = 0;
-    result = mtpl_generator_lteq(&allocs, &input3, generators, NULL, &buf);
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("#t", out);
-}
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp("baz qux", out) == 0);
+        END_SECTION
+    END_SECTION
 
-void test_generator_startsw(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
-    mtpl_buffer in1 = { "foo foo bar" };
-    mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
-    assert_int_equal(res, MTPL_SUCCESS);
-    assert_string_equal(out, "#t");
-    
-    buf.cursor = 0;
-    mtpl_buffer in2 = { "bar foo bar" };
-    res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
-    assert_int_equal(res, MTPL_SUCCESS);
-    assert_string_equal(out, "#f");
-}
+    SECTION("if")
+        SECTION("#f condition is not evaluated")
+            // "foo" does not exist; looking it up would cause an error.
+            mtpl_buffer input = { "#f [=>foo]" };
+            res = mtpl_generator_if(&allocs, &input, gens, props, &buf);
 
-void test_generator_endsw(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
-    mtpl_buffer in1 = { "foo foo bar" };
-    mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
-    assert_int_equal(res, MTPL_SUCCESS);
-    assert_string_equal(out, "#t");
-    
-    buf.cursor = 0;
-    mtpl_buffer in2 = { "bar foo bar" };
-    res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
-    assert_int_equal(res, MTPL_SUCCESS);
-    assert_string_equal(out, "#f");
-}
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(out[0] == '\0');
+        END_SECTION
+        
+        SECTION("#t condition is evaluated")
+            mtpl_buffer input = { "#t [=>foo]" }; // Expect an error.
+            res = mtpl_generator_if(&allocs, &input, gens, props, &buf);
 
-void test_generator_contains(void** state) {
-    char out[32] = { 0 };
-    mtpl_buffer buf = { .data = out, .size = 32 };
-    mtpl_buffer in1 = { "foo foo bar" };
-    mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
-    assert_int_equal(res, MTPL_SUCCESS);
-    assert_string_equal(out, "#t");
-    
-    buf.cursor = 0;
-    mtpl_buffer in2 = { "bar foo bar" };
-    res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
-    assert_int_equal(res, MTPL_SUCCESS);
-    assert_string_equal(out, "#f");
-}
+            REQUIRE(res == MTPL_ERR_UNKNOWN_KEY);
+            REQUIRE(out[0] == '\0');
+        END_SECTION
+        
+        SECTION("'else' clause is evaluated on #f condition")
+            mtpl_buffer input = { "#f [=>foo] [:>it's ok]" }; // Trigger 'else'.
+            res = mtpl_generator_if(&allocs, &input, gens, props, &buf);
 
-const struct CMUnitTest generators_tests[] = {
-    cmocka_unit_test(test_generator_copy),
-    cmocka_unit_test(test_generator_replace),
-    cmocka_unit_test(test_generator_has_prop),
-    cmocka_unit_test(test_generator_escape),
-    cmocka_unit_test(test_generator_let),
-    cmocka_unit_test(test_generator_macro_expand),
-    cmocka_unit_test(test_generator_for),
-    cmocka_unit_test(test_generator_if),
-    cmocka_unit_test(test_generator_not),
-    cmocka_unit_test(test_generator_compare),
-    cmocka_unit_test(test_generator_startsw),
-    cmocka_unit_test(test_generator_endsw),
-    cmocka_unit_test(test_generator_contains)
-};
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp("it's ok", out) == 0);
+        END_SECTION
+    END_SECTION
+
+    SECTION("not")
+        SECTION("#f -> #t")
+            mtpl_buffer input = { "#f" };
+            res = mtpl_generator_not(&allocs, &input, NULL, NULL, &buf);
+
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp("#t", out) == 0);
+        END_SECTION
+        
+        SECTION("#t -> #f")
+            mtpl_buffer input = { "#t" };
+            res = mtpl_generator_not(&allocs, &input, NULL, NULL, &buf);
+
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp("#f", out) == 0);
+        END_SECTION
+    END_SECTION
+
+    SECTION("Comparison")
+        mtpl_buffer i1223 = { "12 23" };
+        mtpl_buffer i2222 = { "22 22" };
+        mtpl_buffer i2312 = { "23 12" };
+
+        SECTION("equals")
+            SECTION("Equality results in #t")
+                mtpl_buffer input = { "foo [:>foo]" };
+                res = mtpl_generator_equals(&allocs, &input, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#t", out) == 0);
+            END_SECTION
+            SECTION("Non-equality results in #f")
+                mtpl_buffer input = { "foo bar" };
+                res = mtpl_generator_equals(&allocs, &input, gens, NULL, &buf);
+
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#f", out) == 0);
+            END_SECTION
+        END_SECTION
+        
+        SECTION("greater")
+            SECTION("Greater results in #t")
+                res = mtpl_generator_greater(&allocs, &i2312, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#t", out) == 0);
+            END_SECTION
+            SECTION("Not greater results in #f")
+                res = mtpl_generator_greater(&allocs, &i1223, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#f", out));
+            END_SECTION
+        END_SECTION
+        
+        SECTION("less")
+            SECTION("Less results in #t")
+                res = mtpl_generator_less(&allocs, &i1223, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#t", out) == 0);
+            END_SECTION
+            SECTION("Not less results in #f")
+                res = mtpl_generator_less(&allocs, &i2312, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#f", out));
+            END_SECTION
+        END_SECTION
+        
+        SECTION("gteq")
+            SECTION("Equal results in #t")
+                res = mtpl_generator_gteq(&allocs, &i2222, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#t", out) == 0);
+            END_SECTION
+            
+            SECTION("Greater results in #t")
+                res = mtpl_generator_gteq(&allocs, &i2312, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#t", out) == 0);
+            END_SECTION
+            
+            SECTION("Less results in #f")
+                res = mtpl_generator_gteq(&allocs, &i1223, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#f", out));
+            END_SECTION
+        END_SECTION
+
+        SECTION("lteq")
+            SECTION("Equal results in #t")
+                res = mtpl_generator_lteq(&allocs, &i2222, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#t", out) == 0);
+            END_SECTION
+            
+            SECTION("Less results in #t")
+                res = mtpl_generator_lteq(&allocs, &i1223, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#t", out) == 0);
+            END_SECTION
+            
+            SECTION("Greater results in #f")
+                res = mtpl_generator_lteq(&allocs, &i2312, gens, NULL, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp("#f", out));
+            END_SECTION
+        END_SECTION
+    END_SECTION
+
+#if 0
+    SECTION("startsw")
+        char out[32] = { 0 };
+        mtpl_buffer buf = { .data = out, .size = 32 };
+        mtpl_buffer in1 = { "foo foo bar" };
+        mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
+        assert_int_equal(res, MTPL_SUCCESS);
+        assert_string_equal(out, "#t");
+        
+        buf.cursor = 0;
+        mtpl_buffer in2 = { "bar foo bar" };
+        res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
+        assert_int_equal(res, MTPL_SUCCESS);
+        assert_string_equal(out, "#f");
+    END_SECTION
+
+    SECTION("endsw")
+        char out[32] = { 0 };
+        mtpl_buffer buf = { .data = out, .size = 32 };
+        mtpl_buffer in1 = { "foo foo bar" };
+        mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
+        assert_int_equal(res, MTPL_SUCCESS);
+        assert_string_equal(out, "#t");
+        
+        buf.cursor = 0;
+        mtpl_buffer in2 = { "bar foo bar" };
+        res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
+        assert_int_equal(res, MTPL_SUCCESS);
+        assert_string_equal(out, "#f");
+    END_SECTION
+
+    SECTION("contains")
+        char out[32] = { 0 };
+        mtpl_buffer buf = { .data = out, .size = 32 };
+        mtpl_buffer in1 = { "foo foo bar" };
+        mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
+        assert_int_equal(res, MTPL_SUCCESS);
+        assert_string_equal(out, "#t");
+        
+        buf.cursor = 0;
+        mtpl_buffer in2 = { "bar foo bar" };
+        res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
+        assert_int_equal(res, MTPL_SUCCESS);
+        assert_string_equal(out, "#f");
+    END_SECTION
+#endif
+END_FIXTURE
 
 int main(void) {
-    return cmocka_run_group_tests(generators_tests, NULL, NULL);
+    return RUN_TEST(generators);
 }
 
