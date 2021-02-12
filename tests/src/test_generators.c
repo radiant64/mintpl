@@ -192,7 +192,7 @@ FIXTURE(generators, "Generators")
             SECTION("Not greater results in #f")
                 res = mtpl_generator_greater(&allocs, &i1223, gens, NULL, &buf);
                 REQUIRE(res == MTPL_SUCCESS);
-                REQUIRE(strcmp("#f", out));
+                REQUIRE(strcmp("#f", out) == 0);
             END_SECTION
         END_SECTION
         
@@ -205,7 +205,7 @@ FIXTURE(generators, "Generators")
             SECTION("Not less results in #f")
                 res = mtpl_generator_less(&allocs, &i2312, gens, NULL, &buf);
                 REQUIRE(res == MTPL_SUCCESS);
-                REQUIRE(strcmp("#f", out));
+                REQUIRE(strcmp("#f", out) == 0);
             END_SECTION
         END_SECTION
         
@@ -225,7 +225,7 @@ FIXTURE(generators, "Generators")
             SECTION("Less results in #f")
                 res = mtpl_generator_gteq(&allocs, &i1223, gens, NULL, &buf);
                 REQUIRE(res == MTPL_SUCCESS);
-                REQUIRE(strcmp("#f", out));
+                REQUIRE(strcmp("#f", out) == 0);
             END_SECTION
         END_SECTION
 
@@ -245,7 +245,7 @@ FIXTURE(generators, "Generators")
             SECTION("Greater results in #f")
                 res = mtpl_generator_lteq(&allocs, &i2312, gens, NULL, &buf);
                 REQUIRE(res == MTPL_SUCCESS);
-                REQUIRE(strcmp("#f", out));
+                REQUIRE(strcmp("#f", out) == 0);
             END_SECTION
         END_SECTION
     END_SECTION
