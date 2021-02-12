@@ -12,7 +12,8 @@ static mtpl_result perform_substitution(
     mtpl_readbuffer* source,
     mtpl_hashtable* generators,
     mtpl_hashtable* properties,
-    mtpl_buffer* out_buffer
+    mtpl_buffer* out_buffer,
+    bool nested
 ) {
     mtpl_generator sub_generator;
     mtpl_result result;
@@ -41,6 +42,9 @@ static mtpl_result perform_substitution(
             );
             if (result != MTPL_SUCCESS) {
                 goto cleanup_arg_buffer;
+            } else if (source->data[source->cursor - 1] != '>') {
+                result = MTPL_ERR_SYNTAX;
+                goto cleanup_arg_buffer;
             }
             sub_generator = mtpl_htable_search(gen_name->data, generators);
             if (!sub_generator) {
@@ -54,7 +58,8 @@ static mtpl_result perform_substitution(
                 source,
                 generators,
                 properties,
-                arg_buffer
+                arg_buffer,
+                true
             );
             if (result != MTPL_SUCCESS) {
                 goto cleanup_arg_buffer;
@@ -70,13 +75,24 @@ static mtpl_result perform_substitution(
             if (result != MTPL_SUCCESS) {
                 goto cleanup_arg_buffer;
             }
-            if (source->data[source->cursor]) {
+            if (source->data[source->cursor] == '}') {
                 source->cursor++;
+            } else {
+                result = MTPL_ERR_SYNTAX;
+                goto cleanup_arg_buffer;
             }
 
             break;
+        case '}':
+            result = MTPL_ERR_SYNTAX;
+            goto cleanup_arg_buffer;
         case ']':
+            if (!nested) {
+                result = MTPL_ERR_SYNTAX;
+                goto cleanup_arg_buffer;
+            }
             source->cursor++;
+            nested = false;
             // Fall through.
         case '\0':
             // End current substitution and return to parent.
@@ -108,6 +124,10 @@ static mtpl_result perform_substitution(
     }
 
 finish_substitution:
+    if (nested) {
+        result = MTPL_ERR_SYNTAX;
+        goto cleanup_arg_buffer;
+    }
     arg_buffer->cursor = 0;
     result = generator(
         allocators,
@@ -142,7 +162,8 @@ mtpl_result mtpl_substitute(
         &buffer,
         generators,
         properties,
-        out_buffer
+        out_buffer,
+        false
     );
 }
 

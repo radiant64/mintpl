@@ -24,14 +24,42 @@ FIXTURE(substitution, "Substitution")
         REQUIRE(strcmp("foo bar", text) == 0);
     END_SECTION
 
+    SECTION("Unknown generator")
+        res = mtpl_substitute("[foo>test]", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_ERR_UNKNOWN_KEY);
+    END_SECTION
+
+    SECTION("Syntax error")
+        res = mtpl_substitute("]", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_ERR_SYNTAX);
+
+        res = mtpl_substitute("{", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_ERR_SYNTAX);
+
+        res = mtpl_substitute("[", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_ERR_SYNTAX);
+
+        res = mtpl_substitute("[:>test]]", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_ERR_SYNTAX);
+
+        res = mtpl_substitute("{test", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_ERR_SYNTAX);
+
+        res = mtpl_substitute("[:>test", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_ERR_SYNTAX);
+
+        res = mtpl_substitute("[foo]", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_ERR_SYNTAX);
+    END_SECTION
+
     SECTION("Quoted")
-        res = mtpl_substitute( "{[:>test]}", &allocs, NULL, NULL, &buffer);
+        res = mtpl_substitute("{[:>test]}", &allocs, NULL, NULL, &buffer);
         REQUIRE(res == MTPL_SUCCESS);
         REQUIRE(strcmp("[:>test]", text) == 0);
     END_SECTION
 
     SECTION("Nested")
-        res = mtpl_substitute( "[:>foo[:>bar]]", &allocs, gens, NULL, &buffer);
+        res = mtpl_substitute("[:>foo[:>bar]]", &allocs, gens, NULL, &buffer);
         REQUIRE(res == MTPL_SUCCESS);
         REQUIRE(strcmp("foobar", text) == 0);
     END_SECTION
