@@ -5,7 +5,7 @@
 static const mtpl_allocators allocs = { malloc, realloc, free };
 
 FIXTURE(hashtable, "Hashtable")
-    char s[] = "foo bar";
+    char input[] = "foo bar";
 
     mtpl_hashtable* htable;
     mtpl_result res = mtpl_htable_create(&allocs, &htable);
@@ -16,7 +16,7 @@ FIXTURE(hashtable, "Hashtable")
     REQUIRE(htable->count == 0);
     
     SECTION("Insertion")
-        res = mtpl_htable_insert("test", s, sizeof(s), &allocs, htable);
+        res = mtpl_htable_insert("test", input, sizeof(input), &allocs, htable);
         REQUIRE(res == MTPL_SUCCESS);
         REQUIRE(htable->count == 1);
 
@@ -25,8 +25,8 @@ FIXTURE(hashtable, "Hashtable")
         SECTION("Search")
             found = mtpl_htable_search("test", htable);
 
-            REQUIRE(strcmp(found, s) == 0);
-            REQUIRE(found != s);
+            REQUIRE(strcmp(found, input) == 0);
+            REQUIRE(found != input);
         END_SECTION
 
         SECTION("Deletion")
