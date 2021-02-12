@@ -26,6 +26,8 @@ Have a look at this small, silly, example.
 - Not built for speed or continuous operation -- this is a "batch job" language.
 - Small -- at the time of writing a static release build of the entire library
   is well below 32 KiB.
+- Text encoding agnostic (for all eight bit text formats with null termination,
+  including UTF-8).
 - Simple syntax:
   - Substitution: `[generator>arguments]`  
     This invokes `generator`, which is a named function that is implementation
@@ -93,7 +95,6 @@ Have a look at this small, silly, example.
 - Currently there's a lack of built in arithmetic and string manipulation
   generators.
 - No API documentation.
-- No Unicode support.
 
 ## Building/installing
 
