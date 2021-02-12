@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.5)
 project(mintpl-tests)
 
 set(TESTS
@@ -10,7 +10,7 @@ set(TESTS
 
 foreach(T ${TESTS})
     add_executable(${T} src/${T}.c)
-    target_link_libraries(${T} mintpl -g)
+    target_link_libraries(${T} mintpl)
     add_test(${T} ${T})
 endforeach()
 

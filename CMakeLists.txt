@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.5)
 project(mintpl 
-    VERSION 2.1.1
+    VERSION 2.1.2
     DESCRIPTION "Minimal Template Programming Language"
 )
 
