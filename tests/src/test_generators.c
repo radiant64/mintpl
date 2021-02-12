@@ -250,52 +250,53 @@ FIXTURE(generators, "Generators")
         END_SECTION
     END_SECTION
 
-#if 0
     SECTION("startsw")
-        char out[32] = { 0 };
-        mtpl_buffer buf = { .data = out, .size = 32 };
-        mtpl_buffer in1 = { "foo foo bar" };
-        mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
-        assert_int_equal(res, MTPL_SUCCESS);
-        assert_string_equal(out, "#t");
+        SECTION("True condition")
+            mtpl_buffer input = { "foo foo bar" };
+            res = mtpl_generator_startsw(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "#t") == 0);
+        END_SECTION
         
-        buf.cursor = 0;
-        mtpl_buffer in2 = { "bar foo bar" };
-        res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
-        assert_int_equal(res, MTPL_SUCCESS);
-        assert_string_equal(out, "#f");
+        SECTION("False condition")
+            mtpl_buffer input = { "bar foo bar" };
+            res = mtpl_generator_startsw(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "#f") == 0);
+        END_SECTION
     END_SECTION
 
     SECTION("endsw")
-        char out[32] = { 0 };
-        mtpl_buffer buf = { .data = out, .size = 32 };
-        mtpl_buffer in1 = { "foo foo bar" };
-        mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
-        assert_int_equal(res, MTPL_SUCCESS);
-        assert_string_equal(out, "#t");
+        SECTION("True condition")
+            mtpl_buffer input = { "foo foo bar" };
+            res = mtpl_generator_startsw(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "#t") == 0);
+        END_SECTION
         
-        buf.cursor = 0;
-        mtpl_buffer in2 = { "bar foo bar" };
-        res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
-        assert_int_equal(res, MTPL_SUCCESS);
-        assert_string_equal(out, "#f");
+        SECTION("False condition")
+            mtpl_buffer input = { "bar foo bar" };
+            res = mtpl_generator_startsw(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "#f") == 0);
+        END_SECTION
     END_SECTION
 
     SECTION("contains")
-        char out[32] = { 0 };
-        mtpl_buffer buf = { .data = out, .size = 32 };
-        mtpl_buffer in1 = { "foo foo bar" };
-        mtpl_result res = mtpl_generator_startsw(&allocs, &in1, NULL, NULL, &buf);
-        assert_int_equal(res, MTPL_SUCCESS);
-        assert_string_equal(out, "#t");
+        SECTION("True condition")
+            mtpl_buffer input = { "foo foo bar" };
+            res = mtpl_generator_startsw(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "#t") == 0);
+        END_SECTION
         
-        buf.cursor = 0;
-        mtpl_buffer in2 = { "bar foo bar" };
-        res = mtpl_generator_startsw(&allocs, &in2, NULL, NULL, &buf);
-        assert_int_equal(res, MTPL_SUCCESS);
-        assert_string_equal(out, "#f");
+        SECTION("False condition")
+            mtpl_buffer input = { "bar foo bar" };
+            res = mtpl_generator_startsw(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "#f") == 0);
+        END_SECTION
     END_SECTION
-#endif
 END_FIXTURE
 
 int main(void) {

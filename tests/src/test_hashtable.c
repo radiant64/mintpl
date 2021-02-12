@@ -1,97 +1,46 @@
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <setjmp.h>
-
-#include <cmocka.h>
+#include "testdrive.h"
 
 #include <mintpl/hashtable.h>
 
-static const mtpl_allocators allocators = { malloc, realloc, free };
+static const mtpl_allocators allocs = { malloc, realloc, free };
 
-void test_htable_create(void** state) {
+FIXTURE(hashtable, "Hashtable")
+    char s[] = "foo bar";
+
     mtpl_hashtable* htable;
-    mtpl_result result = mtpl_htable_create(&allocators, &htable);
+    mtpl_result res = mtpl_htable_create(&allocs, &htable);
 
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_non_null(htable);
-    assert_non_null(htable->entries);
-    assert_int_equal(htable->count, 0);
-    assert_int_not_equal(htable->size, 0);
-
-    mtpl_htable_free(&allocators, htable);
-}
-
-void test_insert(void** state) {
-    char test_string[] = "foo bar";
-    mtpl_hashtable* htable;
-    mtpl_htable_create(&allocators, &htable);
-
-    mtpl_result result = mtpl_htable_insert(
-        "test",
-        test_string,
-        sizeof(test_string),
-        &allocators,
-        htable
-    );
-
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_int_equal(htable->count, 1);
-
-    mtpl_htable_free(&allocators, htable);
-}
-
-void test_search(void** state) {
-    char test_string[] = "foo bar";
-    mtpl_hashtable* htable;
-    mtpl_htable_create(&allocators, &htable);
-    mtpl_htable_insert(
-        "test",
-        test_string,
-        sizeof(test_string),
-        &allocators,
-        htable
-    );
-
-    char* found = mtpl_htable_search("test", htable);
-
-    assert_string_equal(found, test_string);
-    assert_ptr_not_equal(found, test_string);
-
-    mtpl_htable_free(&allocators, htable);
-}
-
-void test_delete(void** state) {
-    char test_string[] = "foo bar";
-    mtpl_hashtable* htable;
-    mtpl_htable_create(&allocators, &htable);
-    mtpl_htable_insert(
-        "test",
-        test_string,
-        sizeof(test_string),
-        &allocators,
-        htable
-    );
-
-    mtpl_result result = mtpl_htable_delete("test", &allocators, htable);
-    char* found = mtpl_htable_search("test", htable);
+    REQUIRE(res == MTPL_SUCCESS);
+    REQUIRE(htable);
+    REQUIRE(htable->entries);
+    REQUIRE(htable->count == 0);
     
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_null(found);
-    
-    mtpl_htable_free(&allocators, htable);
-}
+    SECTION("Insertion")
+        res = mtpl_htable_insert("test", s, sizeof(s), &allocs, htable);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(htable->count == 1);
 
-const struct CMUnitTest hashtable_tests[] = {
-    cmocka_unit_test(test_htable_create),
-    cmocka_unit_test(test_insert),
-    cmocka_unit_test(test_search),
-    cmocka_unit_test(test_delete)
-};
+        char* found;
+
+        SECTION("Search")
+            found = mtpl_htable_search("test", htable);
+
+            REQUIRE(strcmp(found, s) == 0);
+            REQUIRE(found != s);
+        END_SECTION
+
+        SECTION("Deletion")
+            res = mtpl_htable_delete("test", &allocs, htable);
+            found = mtpl_htable_search("test", htable);
+            
+            REQUIRE(!found);
+        END_SECTION
+    END_SECTION
+
+    mtpl_htable_free(&allocs, htable);
+END_FIXTURE
 
 int main(void) {
-    return cmocka_run_group_tests(hashtable_tests, NULL, NULL);
+    return RUN_TEST(hashtable);
 }
 

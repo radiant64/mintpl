@@ -1,140 +1,65 @@
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <setjmp.h>
-
-#include <cmocka.h>
+#include "testdrive.h"
 
 #include <mintpl/generators.h>
 #include <mintpl/substitute.h>
 
-static const mtpl_allocators allocators = { malloc, realloc, free };
+static const mtpl_allocators allocs = { malloc, realloc, free };
 
-void test_plaintext(void** state) {
+FIXTURE(substitution, "Substitution")
     char text[256] = { 0 };
     mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
-    mtpl_result result = mtpl_substitute(
-        "foo bar",
-        &allocators,
-        NULL,
-        NULL,
-        &buffer
-    );
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("foo bar", text);
-}
 
-void test_quote(void** state) {
-    char text[256] = { 0 };
-    mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
-    mtpl_result result = mtpl_substitute(
-        "{[:>test]}",
-        &allocators,
-        NULL,
-        NULL,
-        &buffer
-    );
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("[:>test]", text);
-}
-
-void test_nested(void** state) {
-    char text[256] = { 0 };
-    mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
-    mtpl_hashtable* generators;
-    mtpl_htable_create(&allocators, &generators);
-    mtpl_generator copy = mtpl_generator_copy;
-    mtpl_htable_insert(
-        ":",
-        &copy,
-        sizeof(mtpl_generator),
-        &allocators,
-        generators
-    );
-    mtpl_result result = mtpl_substitute(
-        "[:>foo[:>bar]]",
-        &allocators,
-        generators,
-        NULL,
-        &buffer
-    );
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("foobar", text);
-}
-
-void test_replace(void** state) {
-    char text[256] = { 0 };
-    mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
-    mtpl_hashtable* generators;
-    mtpl_hashtable* properties;
-    mtpl_htable_create(&allocators, &generators);
-    mtpl_htable_create(&allocators, &properties);
+    mtpl_hashtable* gens;
+    mtpl_htable_create(&allocs, &gens);
     mtpl_generator copy = mtpl_generator_copy;
     mtpl_generator replace = mtpl_generator_replace;
-    mtpl_htable_insert(
-        ":",
-        &copy,
-        sizeof(mtpl_generator),
-        &allocators,
-        generators
-    );
-    mtpl_htable_insert(
-        "=",
-        &replace,
-        sizeof(mtpl_generator),
-        &allocators,
-        generators
-    );
-    mtpl_htable_insert(
-        "test1",
-        "foo",
-        4,
-        &allocators,
-        properties
-    );
-    mtpl_htable_insert(
-        "test2",
-        "bar",
-        4,
-        &allocators,
-        properties
-    );
-    mtpl_result result = mtpl_substitute(
-        "[:>[=>test1][=>test2]]",
-        &allocators,
-        generators,
-        properties,
-        &buffer
-    );
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("foobar", text);
-}
+    mtpl_htable_insert(":", &copy, sizeof(mtpl_generator), &allocs, gens);
+    mtpl_htable_insert("=", &replace, sizeof(mtpl_generator), &allocs, gens);
 
-void test_escape(void** state) {
-    char text[256] = { 0 };
-    mtpl_buffer buffer = { .data = text, .cursor = 0, .size = 256 };
-    mtpl_result result = mtpl_substitute(
-        "\\[:>foobar\\]",
-        &allocators,
-        NULL,
-        NULL,
-        &buffer
-    );
-    assert_int_equal(result, MTPL_SUCCESS);
-    assert_string_equal("[:>foobar]", text);
-}
+    mtpl_result res;
+   
+    SECTION("Plain text")
+        res = mtpl_substitute("foo bar", &allocs, NULL, NULL, &buffer);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp("foo bar", text) == 0);
+    END_SECTION
 
-const struct CMUnitTest substitute_tests[] = {
-    cmocka_unit_test(test_plaintext),
-    cmocka_unit_test(test_quote),
-    cmocka_unit_test(test_nested),
-    cmocka_unit_test(test_replace),
-    cmocka_unit_test(test_escape)
-};
+    SECTION("Quoted")
+        res = mtpl_substitute( "{[:>test]}", &allocs, NULL, NULL, &buffer);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp("[:>test]", text) == 0);
+    END_SECTION
+
+    SECTION("Nested")
+        res = mtpl_substitute( "[:>foo[:>bar]]", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp("foobar", text) == 0);
+    END_SECTION
+
+    SECTION("Replacement")
+        mtpl_hashtable* properties;
+        mtpl_htable_create(&allocs, &properties);
+        mtpl_htable_insert("test1", "foo", 4, &allocs, properties);
+        mtpl_htable_insert("test2", "bar", 4, &allocs, properties);
+        res = mtpl_substitute(
+            "[:>[=>test1][=>test2]]",
+            &allocs,
+            gens,
+            properties,
+            &buffer
+        );
+        REQUIRE(res ==  MTPL_SUCCESS);
+        REQUIRE(strcmp("foobar", text) == 0);
+    END_SECTION
+
+    SECTION("Escaped")
+        res = mtpl_substitute("\\[:>foobar\\]", &allocs, NULL, NULL, &buffer);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp("[:>foobar]", text) == 0);
+    END_SECTION
+END_FIXTURE
 
 int main(void) {
-    return cmocka_run_group_tests(substitute_tests, NULL, NULL);
+    return RUN_TEST(substitution);
 }
 

@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.11)
 project(mintpl-tests)
 
 set(TESTS
-    #test_hashtable
+    test_hashtable
     test_generators
-    #test_substitute
+    test_substitute
 )
 
 foreach(T ${TESTS})
