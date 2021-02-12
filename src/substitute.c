@@ -109,7 +109,13 @@ static mtpl_result perform_substitution(
 
 finish_substitution:
     arg_buffer->cursor = 0;
-    generator(allocators, arg_buffer, generators, properties, out_buffer);
+    result = generator(
+        allocators,
+        arg_buffer,
+        generators,
+        properties,
+        out_buffer
+    );
 
 cleanup_arg_buffer:
     mtpl_buffer_free(allocators, arg_buffer);
