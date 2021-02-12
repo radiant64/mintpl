@@ -297,6 +297,9 @@ FIXTURE(generators, "Generators")
             REQUIRE(strcmp(out, "#f") == 0);
         END_SECTION
     END_SECTION
+
+    mtpl_htable_free(&allocs, gens);
+    mtpl_htable_free(&allocs, props);
 END_FIXTURE
 
 int main(void) {
