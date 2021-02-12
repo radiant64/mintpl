@@ -5,6 +5,7 @@ set(TESTS
     test_hashtable
     test_generators
     test_substitute
+    test_unicode
 )
 
 foreach(T ${TESTS})
