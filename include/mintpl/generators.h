@@ -168,6 +168,14 @@ mtpl_result mtpl_generator_contains(
     mtpl_buffer* out
 );
 
+mtpl_result mtpl_generator_arithmetics(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
 #ifdef __cplusplus
 }
 #endif

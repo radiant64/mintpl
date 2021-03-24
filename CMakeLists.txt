@@ -8,6 +8,7 @@ set(SOURCES
     src/buffers.c
     src/hashtable.c
     src/generators.c
+    src/generator_arithmetics.c
     src/mintpl.c
     src/substitute.c
     src/version.c
