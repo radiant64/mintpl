@@ -34,8 +34,8 @@ static const uint8_t mtpl__precedence[] = {
     [MTPL_OP_MODULO] = 4,
     [MTPL_OP_POWER] = 6,
     [MTPL_OP_NEGATE] = 5,
-    [MTPL_OP_LPAREN] = 0,
-    [MTPL_OP_RPAREN] = 1
+    [MTPL_OP_LPAREN] = 1,
+    [MTPL_OP_RPAREN] = 0
 };
 
 typedef enum {
@@ -111,20 +111,32 @@ static mtpl_result mtpl__dump_ops(
 ) {
     mtpl__token token = { 0, MTPL_TOK_OP };
     mtpl__operator* top;
-    while (
-        (top = PEEK_BACK(mtpl__operator)(ops))
-        && mtpl__precedence[op] <= mtpl__precedence[*top]
-    ) {
-        token.operation = *top;
-        const mtpl_result res = PUSH_BACK(mtpl__token)(expr, &token);
-        if (res != MTPL_SUCCESS) {
-            return res;
+    if (op != MTPL_OP_LPAREN) {
+        while (
+            (top = PEEK_BACK(mtpl__operator)(ops))
+            && (
+                (op == MTPL_OP_RPAREN)
+                || (mtpl__precedence[op] <= mtpl__precedence[*top])
+            )
+        ) { 
+            if (op == MTPL_OP_RPAREN && *top == MTPL_OP_LPAREN) {
+                ops->num_entries--;
+                break;
+            } else if (op != MTPL_OP_RPAREN && *top == MTPL_OP_LPAREN) {
+                return MTPL_ERR_SYNTAX;
+            }
+            token.operation = *top;
+            const mtpl_result res = PUSH_BACK(mtpl__token)(expr, &token);
+            if (res != MTPL_SUCCESS) {
+                return res;
+            }
+            ops->num_entries--;
         }
-        ops->num_entries--;
     }
     if (op == MTPL_OP_INVALID) {
         return MTPL_SUCCESS;
-    } else if (op == MTPL_OP_RPAREN) {
+    }
+    if (op == MTPL_OP_RPAREN) {
         return (top && *top == MTPL_OP_LPAREN) ? MTPL_SUCCESS : MTPL_ERR_SYNTAX;
     }
     return PUSH_BACK(mtpl__operator)(ops, &op); 
@@ -208,14 +220,14 @@ static mtpl_result mtpl__eval_valstack(
     case MTPL_OP_DIVIDE:
     case MTPL_OP_MODULO:
     case MTPL_OP_POWER:
-        if (stack->num_entries != 2) {
+        if (stack->num_entries < 2) {
             return MTPL_ERR_SYNTAX;
         }
         b = *POP_BACK(double)(stack);
         a = *POP_BACK(double)(stack);
         break;
     case MTPL_OP_NEGATE:
-        if (stack->num_entries != 1) {
+        if (!stack->num_entries) {
             return MTPL_ERR_SYNTAX;
         }
         a = *POP_BACK(double)(stack);
