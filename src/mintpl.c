@@ -26,6 +26,7 @@ static mtpl_result add_default_generators(
     mtpl_generator lt = mtpl_generator_less;
     mtpl_generator ge = mtpl_generator_gteq;
     mtpl_generator le = mtpl_generator_lteq;
+    mtpl_generator arithmetics = mtpl_generator_arithmetics;
     mtpl_result result = mtpl_htable_insert(
         "!",
         &nop,
@@ -179,6 +180,13 @@ static mtpl_result add_default_generators(
     result = mtpl_htable_insert(
         "le",
         &le,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    result = mtpl_htable_insert(
+        "#",
+        &arithmetics,
         sizeof(mtpl_generator),
         allocators,
         generators

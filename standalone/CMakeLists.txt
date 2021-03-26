@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.5)
 project(mintpl-cli)
 
 set(SOURCES
@@ -7,5 +7,5 @@ set(SOURCES
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} mintpl)
+target_link_libraries(${PROJECT_NAME} mintpl m)
 

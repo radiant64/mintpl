@@ -162,7 +162,7 @@ static mtpl_result mtpl__parse_expr(
     // describing an invalid operation, to be able to correctly parse a unary
     // minus at the start of an expression.
     mtpl__token token = { .operation = MTPL_OP_INVALID, true };
-    while (buf->cursor < buf->size) {
+    while (buf->data[buf->cursor]) {
         if (mtpl__is_space(buf)) {
             buf->cursor++;
             continue;

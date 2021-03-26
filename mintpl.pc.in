@@ -8,6 +8,6 @@ Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 
 Requires:
-Libs: -L${libdir} -lmintpl
+Libs: -L${libdir} -lmintpl -lm
 Cflags: -I${includedir}
 

@@ -40,9 +40,16 @@ static mtpl_result perform_substitution(
                 (mtpl_buffer*) source,
                 gen_name
             );
+            const char c = source->data[source->cursor - 1];
             if (result != MTPL_SUCCESS) {
                 goto cleanup_arg_buffer;
-            } else if (source->data[source->cursor - 1] != '>') {
+            } else if (
+                c != '>'
+                && c != ' '
+                && c != '\t'
+                && c != '\n'
+                && c != '\r'
+            ) {
                 result = MTPL_ERR_SYNTAX;
                 goto cleanup_arg_buffer;
             }
