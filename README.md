@@ -86,14 +86,23 @@ Have a look at this small, silly, example.
     Evaluates its boolean argument, turning `#t` to `#f` and vice versa, and
     throwing syntax error on any other values.
   - `eq` `gt` `lt` `ge` `le`  
-    Binary comparison operators -- equals, greater than, less than, greater or
+    Binary comparison generators -- equals, greater than, less than, greater or
     equal, and less or equal. Compares the first argument with the second. The
     arguments can be quoted substitutions, which will be evaluated.
+  - `#`  
+    Arithmetics generator. Implements a minimal infix arithmetics parser, that
+    works with floating point numbers, and understands parentheses as well as
+    the following set of operators:
+    - `+`: Addition
+    - `-`: Subtraction
+    - `*`: Multiplication
+    - `/`: Division
+    - `%`: Modulo (remainder)
+    - `^`: Power of
 
 ### Known omissions
 
-- Currently there's a lack of built in arithmetic and string manipulation
-  generators.
+- Currently there's a lack of built in string manipulation generators.
 - No API documentation.
 
 ## Building/installing
