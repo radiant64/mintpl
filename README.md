@@ -107,7 +107,7 @@ Have a look at this small, silly, example.
 
 ## Building/installing
 
-The project is built using [CMake](https://cmake.org) (version 3.11 or higher),
+The project is built using [CMake](https://cmake.org) (version 3.5 or higher),
 and has a dependency on [cmocka](https://cmocka.org) for running the tests. The
 build script will automatically download and build cmocka if possible.
 
