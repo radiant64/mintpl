@@ -24,6 +24,12 @@ FIXTURE(substitution, "Substitution")
         REQUIRE(strcmp("foo bar", text) == 0);
     END_SECTION
 
+    SECTION("Initial whitespace")
+        res = mtpl_substitute("[:> foo]", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp("foo", text) == 0);
+    END_SECTION
+
     SECTION("Unknown generator")
         res = mtpl_substitute("[foo>test]", &allocs, gens, NULL, &buffer);
         REQUIRE(res == MTPL_ERR_UNKNOWN_KEY);
