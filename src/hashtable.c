@@ -46,9 +46,6 @@ void mtpl_htable_free(
     const mtpl_allocators* allocators,
     mtpl_hashtable* htable
 ) {
-    if (htable->next) {
-        mtpl_htable_free(allocators, htable->next);
-    }
     for (size_t i = 0; i < htable->size; ++i) {
         allocators->free(htable->entries[i].key);
     }
