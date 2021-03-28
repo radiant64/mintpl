@@ -3,8 +3,13 @@
 #include <mintpl/generators.h>
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+inline static bool is_whitespace(char c) {
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
 
 static mtpl_result perform_substitution(
     mtpl_generator generator,
@@ -43,13 +48,7 @@ static mtpl_result perform_substitution(
             const char c = source->data[source->cursor - 1];
             if (result != MTPL_SUCCESS) {
                 goto cleanup_arg_buffer;
-            } else if (
-                c != '>'
-                && c != ' '
-                && c != '\t'
-                && c != '\n'
-                && c != '\r'
-            ) {
+            } else if (c != '>' && !is_whitespace(c)) {
                 result = MTPL_ERR_SYNTAX;
                 goto cleanup_arg_buffer;
             }
@@ -105,6 +104,11 @@ static mtpl_result perform_substitution(
             // End current substitution and return to parent.
             goto finish_substitution;
         case '\\':
+            // If next character is whitespace, don't read it.
+            if (is_whitespace(source->data[source->cursor + 1])) {
+                source->cursor += 2;
+                break;
+            }
             // Escape next character if not 0.
             if (!source->data[++(source->cursor)]) {
                 result = MTPL_ERR_SYNTAX;

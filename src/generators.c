@@ -1,7 +1,10 @@
 #include <mintpl/generators.h>
 #include <mintpl/substitute.h>
 
+#include <errno.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 inline static bool is_whitespace(char c) {
@@ -26,6 +29,34 @@ mtpl_result mtpl_generator_copy(
     mtpl_buffer* out
 ) {
     return mtpl_buffer_print(arg, allocators, out);
+}
+
+mtpl_result mtpl_generator_copy_strip(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    const size_t len = strlen(arg->data);
+    if (!len) {
+        // Empty string, output nothing.
+        return MTPL_SUCCESS;
+    }
+
+    // Strip space from beginning.
+    size_t i;
+    for (i = 0; i < len && is_whitespace(arg->data[i]); ++i);
+    if (i == len) {
+        // String contains only whitespace; output nothing.
+        return MTPL_SUCCESS;
+    }
+    arg->cursor = i;
+
+    // Strip space from end.
+    for (i = len - 1; i && is_whitespace(arg->data[i]); --i);
+
+    return mtpl_buffer_nprint(arg, allocators, out, i + 1 - arg->cursor);
 }
 
 mtpl_result mtpl_generator_replace(
@@ -682,5 +713,143 @@ mtpl_result mtpl_generator_contains(
     mtpl_buffer* out
 ) {
     return gen_strcmp(allocators, contains, arg, generators, properties, out);
+}
+
+mtpl_result mtpl_generator_range(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    errno = 0;
+    char* start_cursor;
+    char* end_cursor;
+    char* step_cursor;
+    double start = strtod(arg->data, &start_cursor);
+    if (arg->data == start_cursor || errno) {
+        return MTPL_ERR_SYNTAX;
+    }
+    double end = strtod(start_cursor, &end_cursor);
+    if (start_cursor == end_cursor || errno) {
+        return MTPL_ERR_SYNTAX;
+    }
+    double step = 1;
+    if (*end_cursor) {
+        step = strtod(end_cursor, &step_cursor);
+        if (end_cursor == step_cursor || errno) {
+            return MTPL_ERR_SYNTAX;
+        }
+        if (!step) {
+            return MTPL_ERR_SYNTAX;
+        }
+    }
+
+    char num_data[32] = { 0 };
+    mtpl_buffer num = { num_data };
+    snprintf(num_data, 32, "%g", start);
+    mtpl_result res = mtpl_buffer_print(&num, allocators, out);
+    if (res != MTPL_SUCCESS) {
+        return res;
+    }
+    for (double i = start + step; (step > 0) ? i < end : i > end; i += step) {
+        snprintf(num_data, 32, ";%g", i);
+        mtpl_buffer_print(&num, allocators, out);
+        if (res != MTPL_SUCCESS) {
+            return res;
+        }
+    }
+
+    return MTPL_SUCCESS;
+}
+
+mtpl_result mtpl_generator_len(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    size_t count = 0;
+    if (arg->data[0]) {
+        count = 1;
+        for (; arg->data[arg->cursor]; arg->cursor++) {
+            if (arg->data[arg->cursor] == '\\') {
+                // Skip counting escaped characters.
+                arg->cursor++;
+            } else if (arg->data[arg->cursor] == ';') {
+                count++;
+            }
+        }
+    }
+    
+    char num_data[32] = { 0 };
+    mtpl_buffer num = { num_data };
+    snprintf(num_data, 32, "%ld", count);
+    return mtpl_buffer_print(&num, allocators, out);
+}
+
+mtpl_result mtpl_generator_element(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+) {
+    mtpl_result res; 
+    mtpl_buffer* list;
+    mtpl_buffer* value;
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &list);
+    if (res != MTPL_SUCCESS) {
+        return res;
+    }
+    res = mtpl_buffer_create(allocators, MTPL_DEFAULT_BUFSIZE, &value);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_list;
+    }
+
+    res = mtpl_buffer_extract(0, allocators, arg, list);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_value;
+    }
+
+    char* index_cursor;
+    size_t index = strtol(&arg->data[arg->cursor], &index_cursor, 10);
+    if (&arg->data[arg->cursor] == index_cursor || errno) {
+        res = MTPL_ERR_SYNTAX;
+        goto cleanup_value;
+    }
+
+    size_t count = 0;
+    list->cursor = 0;
+    while (count < index && list->data[list->cursor]) {
+        if (list->data[list->cursor] == '\\') {
+            // Skip counting escaped characters.
+            list->cursor++;
+        } else if (list->data[list->cursor] == ';') {
+            count++;
+        }
+        list->cursor++;
+    } 
+
+    if (!list->data[list->cursor]) {
+        res = MTPL_ERR_UNKNOWN_KEY;
+        goto cleanup_value;
+    }
+
+    res = mtpl_buffer_extract(';', allocators, list, value);
+    if (res != MTPL_SUCCESS) {
+        goto cleanup_value;
+    }
+    value->cursor = 0;
+
+    res = mtpl_buffer_print(value, allocators, out);
+
+cleanup_value:
+    mtpl_buffer_free(allocators, value);
+cleanup_list:
+    mtpl_buffer_free(allocators, list);
+
+    return res;
 }
 

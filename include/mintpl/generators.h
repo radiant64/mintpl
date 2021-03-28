@@ -32,6 +32,14 @@ mtpl_result mtpl_generator_copy(
     mtpl_buffer* out
 );
 
+mtpl_result mtpl_generator_copy_strip(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
 mtpl_result mtpl_generator_replace(
     const mtpl_allocators* allocators,
     mtpl_buffer* arg,
@@ -169,6 +177,30 @@ mtpl_result mtpl_generator_contains(
 );
 
 mtpl_result mtpl_generator_arithmetics(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
+mtpl_result mtpl_generator_range(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
+mtpl_result mtpl_generator_len(
+    const mtpl_allocators* allocators,
+    mtpl_buffer* arg,
+    mtpl_hashtable* generators,
+    mtpl_hashtable* properties,
+    mtpl_buffer* out
+);
+
+mtpl_result mtpl_generator_element(
     const mtpl_allocators* allocators,
     mtpl_buffer* arg,
     mtpl_hashtable* generators,

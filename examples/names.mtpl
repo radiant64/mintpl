@@ -1,0 +1,28 @@
+[;>
+[!>{
+
+Prints a list of full names given by combining the lists provided in the
+"first_names" and "surnames" properties. 
+
+Example invocation:
+mintpl-cli -p first_names="Brian;Dennis;Ken" -p surnames="Kernighan;Richie;Thompson" names.mtpl 
+
+Expected output:
+Brian Kernighan
+Dennis Richie
+Ken Thompson
+
+}]
+
+[macro> map_names _ { [;>
+    [for> [range> 0 [=> count]] index 
+          {[;>
+            [()> [=> first_names] [=> index]] [()> [=> surnames] [=> index]]]
+}]]}]\
+\
+[let> count [len> [=> first_names]]]\
+[if> #f
+     { [:> Number of names provided must be equal! ] }
+     { [**> map_names _] }]
+
+]

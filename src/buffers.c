@@ -72,6 +72,15 @@ mtpl_result mtpl_buffer_print(
     mtpl_buffer* output
 ) {
     size_t len = strlen(&input->data[input->cursor]);
+    return mtpl_buffer_nprint(input, allocators, output, len);
+}
+
+mtpl_result mtpl_buffer_nprint(
+    const mtpl_buffer* input,
+    const mtpl_allocators* allocators,
+    mtpl_buffer* output,
+    size_t len
+) {
     if (output->cursor + len >= output->size) {
         MTPL_REALLOC_CHECKED(
             allocators,

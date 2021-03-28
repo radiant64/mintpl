@@ -1,0 +1,20 @@
+[;>
+[!>{
+
+Calculates the factorial of the number given in the property "start".
+
+Example invokation:
+mintpl-cli -p start=5 factorial.mtpl
+
+Expected output:
+5! = 120
+
+}]
+
+[macro> fact n {
+             [if> [eq> [=>n] 1]
+                  1 
+                  { [#> [=>n] * [**> fact [#> [=>n] - 1]]]}]}]\
+[=> start]! = [**> fact [=> start]]
+
+]

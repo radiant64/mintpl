@@ -48,6 +48,7 @@ int process_invocation(int argc, char** argv, invocation_data* run) {
             }
             break;
         case 'p':
+            i = 0;
             while (optarg[++i] && optarg[i] != '=') {
             };
             if (!optarg[i]) {

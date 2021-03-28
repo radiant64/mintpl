@@ -12,6 +12,7 @@ static mtpl_result add_default_generators(
 ) {
     mtpl_generator nop = mtpl_generator_nop;
     mtpl_generator copy = mtpl_generator_copy;
+    mtpl_generator copy_strip = mtpl_generator_copy_strip;
     mtpl_generator replace = mtpl_generator_replace;
     mtpl_generator has_prop = mtpl_generator_has_prop;
     mtpl_generator escape = mtpl_generator_escape;
@@ -27,6 +28,9 @@ static mtpl_result add_default_generators(
     mtpl_generator ge = mtpl_generator_gteq;
     mtpl_generator le = mtpl_generator_lteq;
     mtpl_generator arithmetics = mtpl_generator_arithmetics;
+    mtpl_generator range = mtpl_generator_range;
+    mtpl_generator len = mtpl_generator_len;
+    mtpl_generator element = mtpl_generator_element;
     mtpl_result result = mtpl_htable_insert(
         "!",
         &nop,
@@ -40,6 +44,13 @@ static mtpl_result add_default_generators(
     result = mtpl_htable_insert(
         ":",
         &copy,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    result = mtpl_htable_insert(
+        ";",
+        &copy_strip,
         sizeof(mtpl_generator),
         allocators,
         generators
@@ -187,6 +198,27 @@ static mtpl_result add_default_generators(
     result = mtpl_htable_insert(
         "#",
         &arithmetics,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    result = mtpl_htable_insert(
+        "range",
+        &range,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    result = mtpl_htable_insert(
+        "len",
+        &len,
+        sizeof(mtpl_generator),
+        allocators,
+        generators
+    );
+    result = mtpl_htable_insert(
+        "()",
+        &element,
         sizeof(mtpl_generator),
         allocators,
         generators

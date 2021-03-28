@@ -33,6 +33,14 @@ FIXTURE(generators, "Generators")
         REQUIRE(res == MTPL_SUCCESS);
         REQUIRE(strcmp("foo", out) == 0);
     END_SECTION
+    SECTION("copy_strip")
+        mtpl_buffer input = { " foo\nbar\n\n\n " };
+
+        res = mtpl_generator_copy_strip(&allocs, &input, NULL, NULL, &buf);
+
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(strcmp("foo\nbar", out) == 0);
+    END_SECTION
 
     SECTION("replace")
         mtpl_buffer input = { "foo" };
@@ -92,6 +100,19 @@ FIXTURE(generators, "Generators")
             REQUIRE(res == MTPL_SUCCESS);
             REQUIRE(strcmp(out, "123456") == 0);
         END_SECTION
+
+        SECTION("Parameterless macro")
+            mtpl_buffer in = { "operation simple" };
+            res = mtpl_generator_macro(&allocs, &in, gens, props, NULL);
+            REQUIRE(res == MTPL_SUCCESS);
+
+            SECTION("expand without arguments")
+                mtpl_buffer in = { "operation" };
+                res = mtpl_generator_expand(&allocs, &in, gens, props, &buf);
+                REQUIRE(res == MTPL_SUCCESS);
+                REQUIRE(strcmp(out, "simple") == 0);
+            END_SECTION
+        END_SECTION
     END_SECTION
 
     SECTION("for")
@@ -136,7 +157,7 @@ FIXTURE(generators, "Generators")
         END_SECTION
         
         SECTION("'else' clause is evaluated on #f condition")
-            mtpl_buffer input = { "#f [=>foo] [:>it's ok]" }; // Trigger 'else'.
+            mtpl_buffer input = { "#f\n[=>foo]\n[:>it's ok]" }; // Trigger 'else'.
             res = mtpl_generator_if(&allocs, &input, gens, props, &buf);
 
             REQUIRE(res == MTPL_SUCCESS);
@@ -295,6 +316,60 @@ FIXTURE(generators, "Generators")
             res = mtpl_generator_startsw(&allocs, &input, NULL, NULL, &buf);
             REQUIRE(res == MTPL_SUCCESS);
             REQUIRE(strcmp(out, "#f") == 0);
+        END_SECTION
+    END_SECTION
+
+    SECTION("range")
+        SECTION("Default step")
+            mtpl_buffer input = { "2 6" };
+            res = mtpl_generator_range(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "2;3;4;5") == 0);
+        END_SECTION
+
+        SECTION("Negative step")
+            mtpl_buffer input = { "6 0 -1.5" };
+            res = mtpl_generator_range(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "6;4.5;3;1.5") == 0);
+        END_SECTION
+    END_SECTION
+
+    SECTION("len")
+        SECTION("Empty list")
+            mtpl_buffer input = { "" };
+            res = mtpl_generator_len(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "0") == 0);
+        END_SECTION
+
+        SECTION("Single element")
+            mtpl_buffer input = { "foo" };
+            res = mtpl_generator_len(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "1") == 0);
+        END_SECTION
+
+        SECTION("Populated list")
+            mtpl_buffer input = { "foo;bar;baz;qux" };
+            res = mtpl_generator_len(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "4") == 0);
+        END_SECTION
+    END_SECTION
+    
+    SECTION("element")
+        SECTION("Index out of range")
+            mtpl_buffer input = { "foo;bar;baz;qux 6" };
+            res = mtpl_generator_element(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_ERR_UNKNOWN_KEY);
+        END_SECTION
+        
+        SECTION("Index in range")
+            mtpl_buffer input = { "foo;bar;baz;qux 2" };
+            res = mtpl_generator_element(&allocs, &input, NULL, NULL, &buf);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(strcmp(out, "baz") == 0);
         END_SECTION
     END_SECTION
 
