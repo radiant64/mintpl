@@ -114,7 +114,7 @@ For more examples, see the [examples](examples/) folder.
     Syntax `[len>LIST]`  
     Generates the number of elements in LIST.
   - `()`  
-    Syntax `[()>LIST INDEX]  
+    Syntax `[()>LIST INDEX]`  
     List index lookup generator. Outputs the INDEX'th element in LIST.
 
 ### Known omissions/Future improvements
