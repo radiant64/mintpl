@@ -17,6 +17,8 @@ $ mintpl-cli -p adjectives="small;silly" input.mtpl
 Have a look at this small, silly, example.
 ```
 
+For more examples, see the [examples](examples/) folder.
+
 ### Features/characteristics
 
 - Everything is a string.
@@ -44,12 +46,15 @@ Have a look at this small, silly, example.
   - `:`  
     Copy generator. The default generator when template parsing begins. Simply
     outputs its argument string unadultered.
+  - `;`
+    Copy-and-strip generator. Copies its argument string, but strips any leading
+    and trailing whitespace from it.
   - `=`  
     Lookup generator. Outputs the value of the property with the key specified
     by the argument string.
   - `!`  
     Nop generator. Does nothing with its argument string. Can be used for
-    comments.
+    comments, when combined with quoting.
   - `has_prop`  
     Returns `#t` if the property named by the argument string exists, or `#f` if
     it doesn't.
@@ -99,10 +104,26 @@ Have a look at this small, silly, example.
     - `/`: Division
     - `%`: Modulo (remainder)
     - `^`: Power of
+  - `range`  
+    Syntax: `[range>START END STEP]`  
+    Generates a semicolon separated list of numbers between START and END
+    (non-inclusive). STEP is optional if START is lower than END, and determines
+    the speed and direction between the generated steps. (If omitted, will
+    default to a value of 1.)
+  - `len`  
+    Syntax `[len>LIST]`  
+    Generates the number of elements in LIST.
+  - `()`  
+    Syntax `[()>LIST INDEX]  
+    List index lookup generator. Outputs the INDEX'th element in LIST.
 
-### Known omissions
+### Known omissions/Future improvements
 
 - Currently there's a lack of built in string manipulation generators.
+- Debugging is harder than necessary due to a lack of friendly error messages
+  and debug state output.
+- Output is very sensitive to input whitespace -- indentation requires some
+  care to not affect output.
 - No API documentation.
 
 ## Building/installing
