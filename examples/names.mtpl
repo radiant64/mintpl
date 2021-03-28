@@ -21,7 +21,7 @@ Ken Thompson
 }]]}]\
 \
 [let> count [len> [=> first_names]]]\
-[if> #f
+[if> [:>[not> [eq> [=> count] [len> [=> surnames]]]]]
      { [:> Number of names provided must be equal! ] }
      { [**> map_names _] }]
 
