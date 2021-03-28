@@ -270,6 +270,7 @@ mtpl_result mtpl_generator_expand(
         scope,
         out
     );
+    scope->next = NULL;
 
 cleanup_scope:
     mtpl_htable_free(allocators, scope);
