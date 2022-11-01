@@ -24,7 +24,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION 1
 )
-configure_file(mintpl.pc.in mintpl.pc @ONLY)
+configure_file(mintpl.pc.in mintpl.pc @ONLY@)
 include(GNUInstallDirs)
 install(
     TARGETS ${PROJECT_NAME}
