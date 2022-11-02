@@ -144,7 +144,7 @@ mtpl_result mtpl_buffer_extract_sub(
     if (opener != '[' && opener != '{') {
         return mtpl_buffer_extract(0, allocators, input, out);
     }
-    const char closer = opener == '[' ? ']' : '}';
+    const char closer = (opener == '[') ? ']' : '}';
 
     size_t level = 0;
     do {

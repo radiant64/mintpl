@@ -158,7 +158,7 @@ static mtpl_result let_prop(
     result = mtpl_htable_insert(
         variable->data,
         value->data,
-        strlen(value->data),
+        strlen(value->data) + 1,
         allocators,
         properties
     );

@@ -37,6 +37,21 @@ FIXTURE(hashtable, "Hashtable")
         END_SECTION
     END_SECTION
 
+    SECTION("Empty insertion")
+        res = mtpl_htable_insert("test", "", sizeof(input), &allocs, htable);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(htable->count == 1);
+
+        char* found;
+
+        SECTION("Search")
+            found = mtpl_htable_search("test", htable);
+
+            REQUIRE(found[0] == 0);
+            REQUIRE(found != input);
+        END_SECTION
+    END_SECTION
+
     mtpl_htable_free(&allocs, htable);
 END_FIXTURE
 

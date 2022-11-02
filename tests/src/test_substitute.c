@@ -62,12 +62,23 @@ FIXTURE(substitution, "Substitution")
         res = mtpl_substitute("{[:>test]}", &allocs, NULL, NULL, &buffer);
         REQUIRE(res == MTPL_SUCCESS);
         REQUIRE(strcmp("[:>test]", text) == 0);
+        SECTION("Empty")
+            res = mtpl_substitute("{}", &allocs, NULL, NULL, &buffer);
+            REQUIRE(res == MTPL_SUCCESS);
+            REQUIRE(text[buffer.cursor] == 0);
+        END_SECTION
     END_SECTION
 
     SECTION("Nested")
         res = mtpl_substitute("[:>foo[:>bar]]", &allocs, gens, NULL, &buffer);
         REQUIRE(res == MTPL_SUCCESS);
         REQUIRE(strcmp("foobar", text) == 0);
+    END_SECTION
+
+    SECTION("Empty")
+        res = mtpl_substitute("[:>]", &allocs, gens, NULL, &buffer);
+        REQUIRE(res == MTPL_SUCCESS);
+        REQUIRE(text[0] == 0);
     END_SECTION
 
     SECTION("Replacement")

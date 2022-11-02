@@ -81,12 +81,22 @@ FIXTURE(generators, "Generators")
 
     SECTION("let")
         mtpl_buffer in = { "my\\ test foo bar" };
-        mtpl_result res = mtpl_generator_let(&allocs, &in, NULL, props, NULL);
+        res = mtpl_generator_let(&allocs, &in, NULL, props, NULL);
         REQUIRE(res == MTPL_SUCCESS);
 
         const char* found = mtpl_htable_search("my test", props);
         REQUIRE(found);
         REQUIRE(strcmp(found, "foo bar") == 0);
+
+        SECTION("Empty value")
+            mtpl_buffer in = { "my\\ test {}" };
+            res = mtpl_generator_let(&allocs, &in, NULL, props, NULL);
+            REQUIRE(res == MTPL_SUCCESS);
+
+            const char* found = mtpl_htable_search("my test", props);
+            REQUIRE(found);
+            REQUIRE(found[0] == 0);
+        END_SECTION
     END_SECTION
 
     SECTION("macro")
@@ -99,19 +109,6 @@ FIXTURE(generators, "Generators")
             res = mtpl_generator_expand(&allocs, &in, gens, props, &buf);
             REQUIRE(res == MTPL_SUCCESS);
             REQUIRE(strcmp(out, "123456") == 0);
-        END_SECTION
-
-        SECTION("Parameterless macro")
-            mtpl_buffer in = { "operation simple" };
-            res = mtpl_generator_macro(&allocs, &in, gens, props, NULL);
-            REQUIRE(res == MTPL_SUCCESS);
-
-            SECTION("expand without arguments")
-                mtpl_buffer in = { "operation" };
-                res = mtpl_generator_expand(&allocs, &in, gens, props, &buf);
-                REQUIRE(res == MTPL_SUCCESS);
-                REQUIRE(strcmp(out, "simple") == 0);
-            END_SECTION
         END_SECTION
     END_SECTION
 
